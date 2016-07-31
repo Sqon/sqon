@@ -1,0 +1,52 @@
+{
+    "type": "library",
+    "name": "kherge/sqon",
+    "description": "Reads and writes Sqons.",
+    "keywords": ["PHP", "sqlite", "container"],
+    "license": [
+        "MIT",
+        "Apache-2.0"
+    ],
+    "support": {
+        "issues": "https://github.com/kherge/sqon/issues",
+        "source": "https://github.com/kherge/sqon"
+    },
+
+    "authors": [
+        {
+            "name": "Kevin Herrera",
+            "email": "kevin@herrera.io",
+            "homepage": "http://kevin.herrera.io/",
+            "role": "Developer"
+        }
+    ],
+
+    "autoload": {
+        "psr-4": {
+            "Sqon\\": "src/Sqon"
+        }
+    },
+
+    "autoload-dev": {
+        "psr-4": {
+            "Test\\Sqon\\": "tests/Sqon"
+        }
+    },
+
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.x-dev"
+        }
+    },
+
+    "require": {
+        "php": ">=7.0",
+
+        "ext-pdo_sqlite": "*"
+    },
+
+    "require-dev": {
+        "ext-bz2": "*",
+        "ext-zlib": "*"
+    }
+}
