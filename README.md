@@ -28,7 +28,7 @@ Install
 
 Add as a [Composer][] dependency:
 
-    composer require <a href="https://packagist.org/packages/kherge/sqon">kherge/sqon</a>
+    composer require kherge/sqon
 
 [Composer]: https://getcomposer.org/
 
