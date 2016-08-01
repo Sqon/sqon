@@ -77,6 +77,10 @@ The PHP bootstrap script performs the following functions:
 
 Variables, constants, functions, and classes are not introduced into the global scope by the script. If supporting code is required for the bootstrapping process, it must exist in the `Sqon\Bootstrap` namespace.
 
+If the Sqon is intended to be used as a command line application, a [shebang line][] should be prepended to the PHP bootstrap script. Otherwise, the shebang line should be omitted to prevent PHP from printing it.
+
+[shebang line]: https://en.wikipedia.org/wiki/Shebang_(Unix)
+
 ##### Signature Verification
 
 The PHP bootstrap script will generate a new hashing using the contents of the Sqon, excluding the last 20 bytes. The hash is then compared to the last 20 bytes of the Sqon. If the hashes are not identical, the script will exit with an error stating that the Sqon has been corrupted.
