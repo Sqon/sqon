@@ -1,439 +1,217 @@
 #!/usr/bin/env php
 <?php
 
-namespace
-{
-    eval((new Sqon\Bootstrap(__FILE__))->run());
-}
+set_error_handler(
+    function ($code, $message, $file, $line) {
+        throw new ErrorException($message, 0, $code, $file, $line);
+    }
+);
 
-namespace Sqon
-{
-    use ErrorException;
-    use PDO;
-    use RuntimeException;
-    use UnexpectedValueException;
+eval(
+    call_user_func(
+        function () {
 
-    /**
-     * Manages the bootstrapping process for the Sqon.
-     *
-     * @author Kevin Herrera <kevin@herrera.io>
-     */
-    class Bootstrap
-    {
-        /**
-         * Indicates that bzip2 was used for compression.
-         *
-         * @var integer
-         */
-        const BZIP2 = 2;
+            // The size of the Sqon.
+            $size = filesize(__FILE__);
 
-        /**
-         * Indicates that the path is for a directory.
-         *
-         * @var integer
-         */
-        const DIRECTORY = 1;
+            // The signature of the Sqon
+            $signature = file_get_contents(
+                __FILE__,
+                false,
+                null,
+                $size - 20,
+                20
+            );
 
-        /**
-         * Indicates that the path is for a file.
-         *
-         * @var integer
-         */
-        const FILE = 0;
+            // The path to the cache directory.
+            $cache = join(
+                DIRECTORY_SEPARATOR,
+                [
+                    getenv('SQON_TEMP') ?: sys_get_temp_dir(),
+                    bin2hex($signature)
+                ]
+            );
 
-        /**
-         * Indicates that gzip was used for compression.
-         *
-         * @var integer
-         */
-        const GZIP = 1;
+            // The path to the database file.
+            $database = $cache . DIRECTORY_SEPARATOR . 'sqon.db';
 
-        /**
-         * Indicates that no compression is used.
-         *
-         * @var integer
-         */
-        const NONE = 0;
+            // The path to the primary script.
+            $primary = join(
+                DIRECTORY_SEPARATOR,
+                [$cache, 'files', '.sqon', 'primary.php']
+            );
 
-        /**
-         * The cache directory path.
-         *
-         * @var string
-         */
-        private $cacheDir;
+            /**
+             * Extracts the embedded database to the cache.
+             */
+            $extract_database = function () use (&$database, &$size) {
+                $in = fopen(__FILE__, 'rb');
+                $out = fopen($database, 'wb');
 
-        /**
-         * The database file path.
-         *
-         * @var string
-         */
-        private $databaseFile;
-
-        /**
-         * The path to the Sqon.
-         *
-         * @var string
-         */
-        private $path;
-
-        /**
-         * The path to the primary script.
-         *
-         * @var string
-         */
-        private $primaryFile;
-
-        /**
-         * The signature for the Sqon.
-         *
-         * @var string
-         */
-        private $signature;
-
-        /**
-         * The size of the Sqon.
-         *
-         * @var integer
-         */
-        private $size;
-
-        /**
-         * Initializes the new bootstrapper.
-         *
-         * @param string $path The path to the Sqon.
-         */
-        public function __construct($path)
-        {
-            $this->registerErrorHandler();
-
-            $this->path = $path;
-            $this->size = filesize($path);
-        }
-
-        /**
-         * Performs the bootstrapping process.
-         */
-        public function run()
-        {
-            if (!$this->isVerified()) {
-                throw new RuntimeException(
-                    sprintf(
-                        'The Sqon "%s" is corrupt.',
-                        $this->path
-                    )
+                stream_copy_to_stream(
+                    $in,
+                    $out,
+                    $size - __COMPILER_HALT_OFFSET__ - 20,
+                    __COMPILER_HALT_OFFSET__
                 );
-            }
 
-            if (!$this->isCacheAvailable()) {
-                $this->createCacheDir();
-                $this->extractDatabase();
-                $this->extractFiles();
-            }
+                fclose($out);
+                fclose($in);
+            };
 
-            restore_error_handler();
+            /**
+             * Creates the directory on disk.
+             *
+             * @param string $cache The path to the file cache.
+             * @param string $info  The directory information.
+             */
+            $write_dir = function ($cache, $info) {
+                $path = $cache . DIRECTORY_SEPARATOR . $info['path'];
 
-            if ($this->isPrimaryAvailable()) {
-                return sprintf('require \'%s\';', $this->getPrimaryFile());
-            }
+                if (!is_dir($path)) {
+                    mkdir($path, 0755, true);
+                }
 
-            return '';
-        }
+                chmod($path, $info['permissions']);
+                touch($path, $info['modified']);
+            };
 
-        /**
-         * Creates the cache directory path.
-         */
-        private function createCacheDir()
-        {
-            mkdir($this->getCacheDir(), 0755, true);
-        }
+            /**
+             * Creates the file on disk.
+             *
+             * @param string $cache The path to the file cache.
+             * @param string $info  The directory information.
+             */
+            $write_file = function ($cache, $info) {
+                $path = $cache . DIRECTORY_SEPARATOR . $info['path'];
+                $base = dirname($path);
 
-        /**
-         * Creates a cache directory.
-         *
-         * @param array $dir The directory information.
-         */
-        private function createDir(array $dir)
-        {
-            $path = join(
-                DIRECTORY_SEPARATOR,
-                [
-                    $this->getCacheDir(),
-                    'files',
-                    $dir['path']
-                ]
-            );
+                if (!is_dir($base)) {
+                    mkdir($base, 0755, true);
+                }
 
-            if (!is_dir($path)) {
-                mkdir($path, 0755, true);
-            }
-
-            chmod($path, $dir['permissions']);
-            touch($path, $dir['modified']);
-        }
-
-        /**
-         * Creates a cache file.
-         *
-         * @param array $file The file information.
-         */
-        private function createFile(array $file)
-        {
-            $path = join(
-                DIRECTORY_SEPARATOR,
-                [
-                    $this->getCacheDir(),
-                    'files',
-                    $file['path']
-                ]
-            );
-
-            $dir = dirname($path);
-
-            if (!is_dir($dir)) {
-                mkdir($dir, 0755, true);
-            }
-
-            switch ($file['compression']) {
-                case self::NONE:
-                    break;
-
-                case self::GZIP:
-                    $file['contents'] = gzdecode($file['contents']);
-                    break;
-
-                case self::BZIP2:
-                    $file['contents'] = bzdecompress($file['contents']);
-                    break;
-
-                default:
-                    throw new UnexpectedValueException(
-                        sprintf(
-                            'The compression mode "%d" for the file "%s" was not recognized.',
-                            $file['compression'],
-                            $file['path']
-                        )
-                    );
-            }
-
-            file_put_contents($path, $file['contents']);
-
-            chmod($path, $file['permissions']);
-            touch($path, $file['modified']);
-        }
-
-        /**
-         * Extracts the embedded database to the cache.
-         */
-        private function extractDatabase()
-        {
-            $in = fopen(__FILE__, 'rb');
-            $out = fopen($this->getDatabaseFile(), 'wb');
-
-            stream_copy_to_stream(
-                $in,
-                $out,
-                $this->size - __COMPILER_HALT_OFFSET__ - 20,
-                __COMPILER_HALT_OFFSET__
-            );
-
-            fclose($out);
-            fclose($in);
-        }
-
-        /**
-         * Extracts the files in the database to the cache.
-         */
-        private function extractFiles()
-        {
-            $pdo = new PDO(
-                'sqlite:' . $this->getDatabaseFile(),
-                null,
-                null,
-                [
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-                ]
-            );
-
-            $paths = $pdo->query('SELECT * FROM paths');
-
-            foreach ($paths as $path) {
-                switch ($path['type']) {
-                    case self::FILE:
-                        $this->createFile($path);
+                switch ($info['compression']) {
+                    case 0:
                         break;
 
-                    case self::DIRECTORY:
-                        $this->createDir($path);
+                    case 1:
+                        $info['contents'] = gzdecode($info['contents']);
+                        break;
+
+                    case 2:
+                        $info['contents'] = bzdecompress($info['contents']);
                         break;
 
                     default:
                         throw new UnexpectedValueException(
                             sprintf(
-                                'The type (%d) of the path "%s" is not recognized.',
-                                $path['type'],
-                                $path['path']
+                                'The compression "%d" for "%s" in "%s" is not recognized.',
+                                $path['compression'],
+                                $path['path'],
+                                __FILE__
                             )
                         );
                 }
-            }
-        }
 
-        /**
-         * Returns the cache directory path.
-         *
-         * @return string The path.
-         */
-        private function getCacheDir()
-        {
-            if (null === $this->cacheDir) {
-                $this->cacheDir = join(
-                    DIRECTORY_SEPARATOR,
-                    [
-                        $this->getTempDir(),
-                        bin2hex($this->getSignature())
-                    ]
-                );
-            }
+                file_put_contents($path, $info['contents']);
 
-            return $this->cacheDir;
-        }
+                chmod($path, $info['permissions']);
+                touch($path, $info['modified']);
+            };
 
-        /**
-         * Returns the database file path.
-         *
-         * @return string The path.
-         */
-        private function getDatabaseFile()
-        {
-            if (null === $this->databaseFile) {
-                $this->databaseFile = join(
-                    DIRECTORY_SEPARATOR,
-                    [
-                        $this->getCacheDir(),
-                        'sqon.db'
-                    ]
-                );
-            }
+            /**
+             * Extracts the files in the database to the cache.
+             */
+            $extract_files = function () use (
+                &$cache,
+                &$database,
+                &$write_dir,
+                &$write_file
+            ) {
+                $files = $cache . DIRECTORY_SEPARATOR . 'files';
 
-            return $this->databaseFile;
-        }
+                mkdir($files, 0755, true);
 
-        /**
-         * Returns the primary script file path.
-         *
-         * @return string The path.
-         */
-        private function getPrimaryFile()
-        {
-            if (null === $this->primaryFile) {
-                $this->primaryFile = join(
-                    DIRECTORY_SEPARATOR,
-                    [
-                        $this->getCacheDir(),
-                        'files',
-                        '.sqon',
-                        'primary.php'
-                    ]
-                );
-            }
-
-            return $this->primaryFile;
-        }
-
-        /**
-         * Returns the signature for the Sqon.
-         *
-         * @return string The signature.
-         */
-        private function getSignature()
-        {
-            if (null === $this->signature) {
-                $this->signature = file_get_contents(
-                    $this->path,
-                    false,
+                $pdo = new PDO(
+                    "sqlite:$database",
                     null,
-                    $this->size - 20,
-                    20
+                    null,
+                    [
+                        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+                    ]
                 );
+
+                $paths = $pdo->query('SELECT * FROM paths');
+
+                foreach ($paths as $path) {
+                    switch ($path['type']) {
+                        case 0:
+                            $write_file($files, $path);
+                            break;
+
+                        case 1:
+                            $write_dir($files, $path);
+                            break;
+
+                        default:
+                            throw new UnexpectedValueException(
+                                sprintf(
+                                    'The type "%d" for "%s" in "%s" is not recognized.',
+                                    $path['type'],
+                                    $path['path'],
+                                    __FILE__
+                                )
+                            );
+                    }
+                }
+            };
+
+            /**
+             * Checks if the signature is valid.
+             *
+             * @return boolean Returns `true` if it is, `false` if not.
+             */
+            $is_verified = function () use (&$signature, &$size) {
+                $stream = fopen(__FILE__, 'rb');
+                $context = hash_init('sha1');
+
+                hash_update_stream(
+                    $context,
+                    $stream,
+                    $size - 20
+                );
+
+                fclose($stream);
+
+                return $signature === hash_final($context, true);
+            };
+
+            if (!is_dir($cache)) {
+                if (!$is_verified()) {
+                    throw new RuntimeException(
+                        sprintf(
+                            'The signature for "%s" is not valid.',
+                            __FILE__
+                        )
+                    );
+                }
+
+                mkdir($cache, 0755, true);
+
+                $extract_database();
+                $extract_files();
             }
 
-            return $this->signature;
+            restore_error_handler();
+
+            if (is_file($primary)) {
+                return "require '$primary';";
+            }
+
+            return '';
         }
-
-        /**
-         * Returns the temporary directory path.
-         *
-         * @return string The path.
-         */
-        private function getTempDir()
-        {
-            return getenv('SQON_TEMP') ?: sys_get_temp_dir();
-        }
-
-        /**
-         * Checks if the Sqon cache is available.
-         *
-         * @return boolean Returns `true` if available, `false` if not.
-         */
-        private function isCacheAvailable()
-        {
-            return is_dir($this->getCacheDir());
-        }
-
-        /**
-         * Checks if the primary script is available.
-         *
-         * @return boolean Returns `true` if available, `false` if not.
-         */
-        private function isPrimaryAvailable()
-        {
-            return is_file($this->getPrimaryFile());
-        }
-
-        /**
-         * Checks if the signature for the Sqon is valid.
-         *
-         * @return boolean Returns `true` if verified, `false` if not.
-         */
-        private function isVerified()
-        {
-            return $this->getSignature() === $this->makeSignature();
-        }
-
-        /**
-         * Creates a new signature for the Sqon.
-         *
-         * @return string The new signature.
-         */
-        private function makeSignature()
-        {
-            $stream = fopen($this->path, 'rb');
-            $context = hash_init('sha1');
-
-            hash_update_stream(
-                $context,
-                $stream,
-                $this->size - 20
-            );
-
-            fclose($stream);
-
-            return hash_final($context, true);
-        }
-
-        /**
-         * Registers a custom error handler.
-         */
-        private function registerErrorHandler()
-        {
-            set_error_handler(
-                function ($code, $message, $file, $line) {
-                    throw new ErrorException($message, 0, $code, $file, $line);
-                }
-            );
-        }
-    }
-}
+    )
+);
 
 __HALT_COMPILER();
