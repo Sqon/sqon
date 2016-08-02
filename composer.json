@@ -41,8 +41,8 @@
 
     "require": {
         "php": ">=5.6",
-
-        "ext-pdo_sqlite": "*"
+        "ext-pdo_sqlite": "*",
+        "kherge/file-manager": "^1.0"
     },
 
     "require-dev": {
