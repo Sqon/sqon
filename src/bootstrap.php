@@ -10,6 +10,13 @@ eval(
     call_user_func(
         function () {
 
+            // The compiler halt offset.
+            $offset = __COMPILER_HALT_OFFSET__;
+
+            if (defined('HHVM_VERSION')) {
+                $offset += 2;
+            }
+
             // The size of the Sqon.
             $size = filesize(__FILE__);
 
@@ -43,15 +50,15 @@ eval(
             /**
              * Extracts the embedded database to the cache.
              */
-            $extract_database = function () use (&$database, &$size) {
+            $extract_database = function () use (&$database, &$offset, &$size) {
                 $in = fopen(__FILE__, 'rb');
                 $out = fopen($database, 'wb');
 
                 stream_copy_to_stream(
                     $in,
                     $out,
-                    $size - __COMPILER_HALT_OFFSET__ - 20,
-                    __COMPILER_HALT_OFFSET__
+                    $size - $offset - 20,
+                    $offset
                 );
 
                 fclose($out);

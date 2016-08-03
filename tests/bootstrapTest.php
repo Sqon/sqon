@@ -60,8 +60,8 @@ class bootstrapTest extends TestCase
             $output
         );
 
-        self::assertEquals(
-            "6536\nHello, world!",
+        self::assertRegExp(
+            "/66(90|88)\nHello, world!/",
             join("\n", $output),
             'The PHP bootstrap script did not function as intended.'
         );
