@@ -21,6 +21,13 @@ class bootstrapTest extends TestCase
     private $path;
 
     /**
+     * The Sqon manager.
+     *
+     * @var Sqon
+     */
+    private $sqon;
+
+    /**
      * Verify that the PHP bootstrap script:
      *
      * - verifies the signature
@@ -29,6 +36,66 @@ class bootstrapTest extends TestCase
      */
     public function testPhpBootstrapScriptFunctionsAsIntended()
     {
+        $hello = new Memory('<?php echo "Hello, world!\n";');
+        $primary = new Memory("<?php require __DIR__ . '/../hello.php';");
+
+        $this
+            ->sqon
+            ->setPath(Sqon::PRIMARY, $primary)
+            ->setPath('hello.php', $hello)
+            ->commit()
+        ;
+
+        exec(
+            sprintf(
+                'php %s',
+                escapeshellarg($this->path)
+            ),
+            $output
+        );
+
+        self::assertEquals(
+            "Hello, world!",
+            join("\n", $output),
+            'The PHP bootstrap script did not function as intended.'
+        );
+    }
+
+    /**
+     * Verify that the PHP bootstrap script:
+     *
+     * - verifies the signature
+     * - self extracts
+     * - executes the primary script
+     *
+     * with varying compression modes.
+     */
+    public function testPhpBootstrapScriptFunctionsAsIntendedWithCompression()
+    {
+        $hello = new Memory('<?php echo "Hello, world!\n";');
+        $hello_bzip2 = new Memory('<?php echo "Hello, bzip2!\n";');
+        $hello_gzip = new Memory('<?php echo "Hello, gzip!\n";');
+        $primary = new Memory(
+            <<<PHP
+<?php
+
+require __DIR__ . '/../hello.php';
+require __DIR__ . '/../hello-bzip2.php';
+require __DIR__ . '/../hello-gzip.php';
+PHP
+        );
+
+        $this
+            ->sqon
+            ->setPath(Sqon::PRIMARY, $primary)
+            ->setPath('hello.php', $hello)
+            ->setCompression(Sqon::BZIP2)
+            ->setPath('hello-bzip2.php', $hello_bzip2)
+            ->setCompression(Sqon::GZIP)
+            ->setPath('hello-gzip.php', $hello_gzip)
+            ->commit()
+        ;
+
         exec(
             sprintf(
                 'php %s',
@@ -50,29 +117,7 @@ class bootstrapTest extends TestCase
     protected function setUp()
     {
         $this->path = tempnam(sys_get_temp_dir(), 'sqon-');
-
-        $hello = new Memory('<?php echo "Hello, world!\n";');
-        $hello_bzip2 = new Memory('<?php echo "Hello, bzip2!\n";');
-        $hello_gzip = new Memory('<?php echo "Hello, gzip!\n";');
-        $primary = new Memory(
-            <<<PHP
-<?php
-
-require __DIR__ . '/../hello.php';
-require __DIR__ . '/../hello-bzip2.php';
-require __DIR__ . '/../hello-gzip.php';
-PHP
-        );
-
-        Sqon::create($this->path)
-            ->setPath(Sqon::PRIMARY, $primary)
-            ->setPath('hello.php', $hello)
-            ->setCompression(Sqon::BZIP2)
-            ->setPath('hello-bzip2.php', $hello_bzip2)
-            ->setCompression(Sqon::GZIP)
-            ->setPath('hello-gzip.php', $hello_gzip)
-            ->commit()
-        ;
+        $this->sqon = Sqon::create($this->path);
     }
 
     /**
@@ -80,6 +125,8 @@ PHP
      */
     protected function tearDown()
     {
+        $this->sqon = null;
+
         if (file_exists($this->path)) {
             unlink($this->path);
         }
