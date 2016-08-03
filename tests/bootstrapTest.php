@@ -38,8 +38,8 @@ class bootstrapTest extends TestCase
         );
 
         self::assertEquals(
-            'Hello, world!',
-            join(PHP_EOL, $output),
+            "Hello, world!\nHello, bzip2!\nHello, gzip!",
+            join("\n", $output),
             'The PHP bootstrap script did not function as intended.'
         );
     }
@@ -51,15 +51,26 @@ class bootstrapTest extends TestCase
     {
         $this->path = tempnam(sys_get_temp_dir(), 'sqon-');
 
+        $hello = new Memory('<?php echo "Hello, world!\n";');
+        $hello_bzip2 = new Memory('<?php echo "Hello, bzip2!\n";');
+        $hello_gzip = new Memory('<?php echo "Hello, gzip!\n";');
+        $primary = new Memory(
+            <<<PHP
+<?php
+
+require __DIR__ . '/../hello.php';
+require __DIR__ . '/../hello-bzip2.php';
+require __DIR__ . '/../hello-gzip.php';
+PHP
+        );
+
         Sqon::create($this->path)
-            ->setPath(
-                'hello.php',
-                new Memory('<?php echo "Hello, world!\n";')
-            )
-            ->setPath(
-                Sqon::PRIMARY,
-                new Memory("<?php require __DIR__ . '/../hello.php';")
-            )
+            ->setPath(Sqon::PRIMARY, $primary)
+            ->setPath('hello.php', $hello)
+            ->setCompression(Sqon::BZIP2)
+            ->setPath('hello-bzip2.php', $hello_bzip2)
+            ->setCompression(Sqon::GZIP)
+            ->setPath('hello-gzip.php', $hello_gzip)
             ->commit()
         ;
     }
