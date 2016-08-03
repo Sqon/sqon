@@ -2,6 +2,7 @@
 ============================
 
 - [Usage](#usage)
+- [Requirements](#requirements)
 - [Install](#install)
 - [Documentation](#documentation)
 - [Specification](#specification)
@@ -21,7 +22,43 @@
 Usage
 -----
 
-To be determined.
+> The following uses a Symfony 3 project as an example. Sqon itself is project agnostic, so it will work on any PHP project regardless of how it is implemented.
+
+```php
+use Sqon\Iterator\DirectoryIterator;
+use Sqon\Path\Memory;
+use Sqon\Sqon;
+
+// Start the process of creating a new Sqon.
+Sqon::create('project.sqon')
+
+    // Enable GZIP compression.
+    ->setCompression(Sqon::GZIP)
+
+    // Add all files in a Symfony 3 project directory.
+    ->setPathsUsingIterator(new DirectoryIterator('test'))
+
+    // Execute the console when the Sqon is executed.
+    ->setPath(
+        Sqon::PRIMARY,
+        new Memory("<?php require __DIR__ . '/../bin/console';")
+    )
+
+    // Commit the changes to a file on disk.
+    ->commit()
+
+;
+```
+
+When you run `php project.sqon` you will see the Symfony 3 console.
+
+Requirements
+------------
+
+- PHP 5.6 or greater
+    - `pdo_sqlite`
+    - `bz2` (if using bzip2 compression)
+    - `zlib` (if using gzip compression)
 
 Install
 -------
@@ -35,7 +72,13 @@ Add as a [Composer][] dependency:
 Documentation
 -------------
 
-To be determined.
+As a developer creating or reading a Sqon, you will primarily be relying on the bundled implementation of [`SqonInterface`][], `Sqon`. You will need to read the interface documentation to have a high level understanding of how a Sqon is created, read, and modified.
+
+Interacting with paths (files and directories) stored in a Sqon requires an understanding of the [`PathInterface`][] interface. When reading from a Sqon, you will be working with the `Memory` implementation of `PathInterface`. When adding individual paths to a Sqon, you will mostly be working with the [`File`][] implementation of `PathInterface`.
+
+[`File`]: src/Sqon/Path/File.php
+[`PathInterface`]: src/Sqon/Path/PathInterface.php
+[`SqonInterface`]: src/Sqon/SqonInterface.php
 
 Specification
 -------------
