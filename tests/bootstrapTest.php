@@ -29,14 +29,17 @@ class bootstrapTest extends TestCase
      */
     public function testPhpBootstrapScriptFunctionsAsIntended()
     {
+        exec(
+            sprintf(
+                'php %s',
+                escapeshellarg($this->path)
+            ),
+            $output
+        );
+
         self::assertEquals(
             'Hello, world!',
-            exec(
-                sprintf(
-                    'php %s',
-                    escapeshellarg($this->path)
-                )
-            ),
+            join(PHP_EOL, $output),
             'The PHP bootstrap script did not function as intended.'
         );
     }
