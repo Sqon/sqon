@@ -126,7 +126,7 @@ class Reader
 
             $this->file->seek($position);
 
-            if ($this->file->eof()) {
+            if (null === $this->bootstrapSize) {
                 // @codeCoverageIgnoreStart
                 throw new ReaderException(
                     '`__HALT_COMPILER();` is missing in the PHP bootstrap script.'
