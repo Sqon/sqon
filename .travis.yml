@@ -16,6 +16,7 @@ matrix:
     fast_finish: true
 
 php:
+    - 5.6
     - 7.0
     - nightly
     - hhvm
