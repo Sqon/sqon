@@ -89,12 +89,12 @@ class DatabaseTest extends TestCase
 
     /**
      * Verify that an exception is thrown if a file does not exist.
+     *
+     * @expectedException \Sqon\Exception\Container\DatabaseException
+     * @expectedExceptionMessage The path "test.php" does not exist.
      */
     public function testRetrievingAFileThatDoesNotExistThrowsAnException()
     {
-        $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('The path "test.php" does not exist.');
-
         $this->manager->getPath($this->values['path']);
     }
 
