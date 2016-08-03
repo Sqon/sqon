@@ -23,9 +23,20 @@ class SignatureTest extends TestCase
         $file = new File('php://memory', 'w+');
         $file->write('test');
 
+        $hash = hash('sha1', 'test', true);
+        $signature = new Signature();
+
         self::assertEquals(
-            hash('sha1', 'test', true),
-            (new Signature())->generate($file),
+            $hash,
+            $signature->generate($file),
+            'The new signature was not generated properly.'
+        );
+
+        $file->write($hash);
+
+        self::assertEquals(
+            $hash,
+            $signature->generate($file, true),
             'The new signature was not generated properly.'
         );
     }
