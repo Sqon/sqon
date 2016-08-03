@@ -18,6 +18,34 @@ use Sqon\Path\PathInterface;
 class Database
 {
     /**
+     * Indicates that the contents were compressed using bzip2.
+     *
+     * @var integer
+     */
+    const BZIP2 = 2;
+
+    /**
+     * Indicates that the contents were compressed using gzip.
+     *
+     * @var integer
+     */
+    const GZIP = 1;
+
+    /**
+     * Indicates that the contents are not compressed.
+     *
+     * @var integer
+     */
+    const NONE = 0;
+
+    /**
+     * The compression mode.
+     *
+     * @var integer
+     */
+    private $compression = self::NONE;
+
+    /**
      * The database connection.
      *
      * @var PDO
@@ -84,6 +112,9 @@ SQL
     /**
      * Returns the information for a path.
      *
+     * If the file contents were compressed, they are automatically
+     * decompressed before being returned in a path manager.
+     *
      * @param string $path The path to retrieve.
      *
      * @return Memory The path information.
@@ -94,9 +125,8 @@ SQL
     {
         foreach ($this->select('paths', ['path' => $path]) as $info) {
             return new Memory(
-                $info['contents'],
+                $this->decompress($info['contents'], $info['compression']),
                 $info['type'],
-                $info['compression'],
                 $info['modified'],
                 $info['permissions']
             );
@@ -108,15 +138,17 @@ SQL
     /**
      * Yields all of the paths in the database.
      *
+     * If the file contents were compressed, they are automatically
+     * decompressed before being returned in a path manager.
+     *
      * @return Generator|Memory[] All available paths.
      */
     public function getPaths()
     {
         foreach ($this->select('paths', []) as $info) {
             yield new Memory(
-                $info['contents'],
+                $this->decompress($info['contents'], $info['compression']),
                 $info['type'],
-                $info['compression'],
                 $info['modified'],
                 $info['permissions']
             );
@@ -154,7 +186,36 @@ SQL
     }
 
     /**
+     * Sets the compression mode.
+     *
+     * @param integer $mode The compression mode.
+     *
+     * @throws DatabaseException If the mode is not recognized.
+     */
+    public function setCompression($mode)
+    {
+        switch ($mode) {
+            case self::BZIP2:
+            case self::GZIP:
+            case self::NONE:
+                break;
+
+        // @codeCoverageIgnoreStart
+            default:
+                throw new DatabaseException(
+                    "The compression mode \"$mode\" is not recognized."
+                );
+        }
+        // @codeCoverageIgnoreEnd
+
+        $this->compression = $mode;
+    }
+
+    /**
      * Sets the information for a path.
+     *
+     * If a compression mode other than `NONE` is set, the file contents are
+     * automatically compressed using the respective compression scheme.
      *
      * @param string        $path    The name of the path.
      * @param PathInterface $manager The path manager.
@@ -166,12 +227,40 @@ SQL
             [
                 'path' => $path,
                 'type' => $manager->getType(),
-                'compression' => $manager->getCompression(),
+                'compression' => $this->compression,
                 'modified' => $manager->getModified(),
                 'permissions' => $manager->getPermissions(),
-                'contents' => $manager->getContents()
+                'contents' => $this->compress($manager->getContents())
             ]
         );
+    }
+
+    /**
+     * Compresses file contents.
+     *
+     * @param null|string $contents The contents.
+     *
+     * @return null|string The compressed contents.
+     *
+     * @throws DatabaseException If the contents could not be compressed.
+     */
+    private function compress($contents)
+    {
+        if (null !== $contents) {
+            switch ($this->compression) {
+                case self::BZIP2:
+                    $contents = bzcompress($contents);
+
+                    break;
+
+                case self::GZIP:
+                    $contents = gzencode($contents);
+
+                    break;
+            }
+        }
+
+        return $contents;
     }
 
     /**
@@ -187,6 +276,54 @@ SQL
         $count = iterator_to_array($this->select($table, $where, ['COUNT(*)']));
 
         return (int) $count[0]['COUNT(*)'];
+    }
+
+    /**
+     * Decompresses file contents.
+     *
+     * @param null|string $contents The compressed contents.
+     * @param integer     $mode     The compression mode.
+     *
+     * @return null|string The decompressed contents.
+     *
+     * @throws DatabaseException If the compression mode is not recognized.
+     * @throws DatabaseException If the contents could not be decompressed.
+     */
+    private function decompress($contents, $mode)
+    {
+        if (null !== $contents) {
+            switch ($mode) {
+                case self::BZIP2:
+                    $contents = bzdecompress($contents);
+
+                    break;
+
+                case self::GZIP:
+                    $contents = gzdecode($contents);
+
+                    break;
+
+                case self::NONE:
+                    break;
+
+            // @codeCoverageIgnoreStart
+                default:
+                    throw new DatabaseException(
+                        "The compression mode \"$mode\" is not recognized."
+                    );
+            }
+            // @codeCoverageIgnoreEnd
+
+            if (false === $contents) {
+                // @codeCoverageIgnoreStart
+                throw new DatabaseException(
+                    'The contents could not be decompressed.'
+                );
+                // @codeCoverageIgnoreEnd
+            }
+        }
+
+        return $contents;
     }
 
     /**

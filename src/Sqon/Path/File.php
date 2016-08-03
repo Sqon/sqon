@@ -12,13 +12,6 @@ use Sqon\Exception\Path\PathException;
 class File implements PathInterface
 {
     /**
-     * The compression mode.
-     *
-     * @var integer
-     */
-    private $compression;
-
-    /**
      * The path to the file.
      *
      * @var string
@@ -28,21 +21,11 @@ class File implements PathInterface
     /**
      * Initializes the new file path manager.
      *
-     * @param string $path         The path to the file.
-     * @param integer $compression The compression mode.
+     * @param string $path The path to the file.
      */
-    public function __construct($path, $compression = self::NONE)
+    public function __construct($path)
     {
-        $this->compression = $compression;
         $this->path = $path;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getCompression()
-    {
-        return $this->compression;
     }
 
     /**

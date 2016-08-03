@@ -109,7 +109,7 @@ class SqonTest extends TestCase
     /**
      * Verify that a path can be manages in the Sqon.
      */
-    public function testRetrieveExistingPathFromTheSqon()
+    public function testManagePathsInTheSqon()
     {
         $path = new Memory('test');
 
@@ -150,6 +150,18 @@ class SqonTest extends TestCase
         self::assertFalse(
             $this->sqon->hasPath('test.php'),
             'The path was not removed.'
+        );
+    }
+
+    /**
+     * Verify that the compression mode can be set.
+     */
+    public function testSetDatabaseCompressionMode()
+    {
+        self::assertSame(
+            $this->sqon,
+            $this->sqon->setCompression(Sqon::GZIP),
+            'The compression mode setter did not return a fluent interface.'
         );
     }
 

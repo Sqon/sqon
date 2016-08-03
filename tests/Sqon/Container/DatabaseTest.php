@@ -63,12 +63,6 @@ class DatabaseTest extends TestCase
         $path = $this->manager->getPath($this->values['path']);
 
         self::assertEquals(
-            $this->values['compression'],
-            $path->getCompression(),
-            'The compression mode was not returned properly.'
-        );
-
-        self::assertEquals(
             $this->values['contents'],
             $path->getContents(),
             'The file contents were not returned properly.'
@@ -112,12 +106,6 @@ class DatabaseTest extends TestCase
         $this->insert->execute($this->values);
 
         foreach ($this->manager->getPaths() as $path) {
-            self::assertEquals(
-                $this->values['compression'],
-                $path->getCompression(),
-                'The compression mode was not returned properly.'
-            );
-
             self::assertEquals(
                 $this->values['contents'],
                 $path->getContents(),
@@ -182,7 +170,6 @@ class DatabaseTest extends TestCase
             new Memory(
                 $this->values['contents'],
                 $this->values['type'],
-                $this->values['compression'],
                 $this->values['modified'],
                 $this->values['permissions']
             )
@@ -200,6 +187,96 @@ class DatabaseTest extends TestCase
             $this->values,
             $records[0],
             'The path was not inserted properly.'
+        );
+    }
+
+    /**
+     * Verify that contents can be compressed using bzip2.
+     */
+    public function testSetAPathUsingBzip2Compression()
+    {
+        $this->manager->setCompression(Database::BZIP2);
+        $this->manager->setPath(
+            $this->values['path'],
+            new Memory(
+                $this->values['contents'],
+                $this->values['type'],
+                $this->values['modified'],
+                $this->values['permissions']
+            )
+        );
+
+        $query = $this->pdo->query(
+            "SELECT * FROM paths WHERE path = '{$this->values['path']}'"
+        );
+
+        $records = $query->fetchAll();
+
+        $query->closeCursor();
+
+        self::assertEquals(
+            array_merge(
+                $this->values,
+                [
+                    'compression' => Database::BZIP2,
+                    'contents' => bzcompress($this->values['contents'])
+                ]
+            ),
+            $records[0],
+            'The contents were not compressed using bzip2.'
+        );
+
+        $path = $this->manager->getPath($this->values['path']);
+
+        self::assertEquals(
+            $this->values['contents'],
+            $path->getContents(),
+            'The contents were not decompressed after selection.'
+        );
+    }
+
+    /**
+     * Verify that contents can be compressed using gzip.
+     */
+    public function testSetAPathUsingGzipCompression()
+    {
+        $this->manager->setCompression(Database::GZIP);
+        $this->manager->setPath(
+            $this->values['path'],
+            new Memory(
+                $this->values['contents'],
+                $this->values['type'],
+                $this->values['modified'],
+                $this->values['permissions']
+            )
+        );
+
+        $query = $this->pdo->query(
+            "SELECT * FROM paths WHERE path = '{$this->values['path']}'"
+        );
+
+        $records = $query->fetchAll();
+
+        $query->closeCursor();
+
+        self::assertEquals(
+            array_merge(
+                $this->values,
+                [
+                    'compression' => Database::GZIP,
+                    'contents' => gzencode($this->values['contents'])
+                ]
+            ),
+            $records[0],
+            'The contents were not compressed using gzip.'
+        );
+
+        $path = $this->manager->getPath($this->values['path']);
+
+        self::assertEquals(
+            $this->values['contents'],
+            $path->getContents(),
+            'The contents were not decompressed after selection.'
         );
     }
 
@@ -238,9 +315,9 @@ class DatabaseTest extends TestCase
         );
 
         $this->values = [
+            'compression' => Database::NONE,
             'path' => 'test.php',
             'type' => Memory::FILE,
-            'compression' => Memory::GZIP,
             'modified' => time(),
             'permissions' => 0644,
             'contents' => 'test'

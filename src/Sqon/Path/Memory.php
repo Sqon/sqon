@@ -10,13 +10,6 @@ namespace Sqon\Path;
 class Memory implements PathInterface
 {
     /**
-     * The compression mode.
-     *
-     * @var integer
-     */
-    private $compression;
-
-    /**
      * The file contents.
      *
      * @var null|string
@@ -49,14 +42,12 @@ class Memory implements PathInterface
      *
      * @param null|string $contents    The contents of the file.
      * @param integer     $type        The type of the path.
-     * @param integer     $compression The compression mode.
      * @param integer     $modified    The last modified Unix timestamp.
      * @param integer     $permissions The Unix file permissions.
      */
     public function __construct(
         $contents = null,
         $type = self::FILE,
-        $compression = self::NONE,
         $modified = null,
         $permissions = 0644
     ) {
@@ -64,19 +55,10 @@ class Memory implements PathInterface
             $modified = time();
         }
 
-        $this->compression = $compression;
         $this->contents = $contents;
         $this->modified = $modified;
         $this->permissions = $permissions;
         $this->type = $type;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getCompression()
-    {
-        return $this->compression;
     }
 
     /**

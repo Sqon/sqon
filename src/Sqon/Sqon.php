@@ -237,6 +237,16 @@ class Sqon implements SqonInterface
     /**
      * {@inheritdoc}
      */
+    public function setCompression($mode)
+    {
+        $this->database->setCompression($mode);
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function setPath($path, PathInterface $manager)
     {
         $this->database->setPath($this->cleanPath($path), $manager);

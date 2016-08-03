@@ -32,18 +32,6 @@ class FileTest extends TestCase
     private $manager;
 
     /**
-     * Verify that the compression mode can be retrieved.
-     */
-    public function testRetrieveTheCompressionMode()
-    {
-        self::assertEquals(
-            File::NONE,
-            $this->manager->getCompression(),
-            'The compression mode was not returned.'
-        );
-    }
-
-    /**
      * Verify that the file contents can be retrieved.
      */
     public function testRetrieveTheFileContents()

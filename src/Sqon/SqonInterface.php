@@ -4,6 +4,7 @@ namespace Sqon;
 
 use Generator;
 use Iterator;
+use Sqon\Container\Database;
 use Sqon\Exception\SqonException;
 use Sqon\Path\PathInterface;
 
@@ -14,6 +15,27 @@ use Sqon\Path\PathInterface;
  */
 interface SqonInterface
 {
+    /**
+     * Indicates that the contents are compressed using bzip2.
+     *
+     * @var integer
+     */
+    const BZIP2 = Database::BZIP2;
+
+    /**
+     * Indicates that the contents are compressed using gzip.
+     *
+     * @var integer
+     */
+    const GZIP = Database::GZIP;
+
+    /**
+     * Indicates that the contents are not compressed.
+     *
+     * @var integer
+     */
+    const NONE = Database::NONE;
+
     /**
      * The path to the primary script in the Sqon.
      *
@@ -91,6 +113,9 @@ interface SqonInterface
 
     /**
      * Returns the path manager for a path stored in the Sqon.
+     *
+     * If the file contents were compressed, they are automatically
+     * decompressed before being returned in a path manager.
      *
      * ```php
      * $path = $sqon->getPath('path/inside/sqon.php');
@@ -199,6 +224,24 @@ interface SqonInterface
      * @throws SqonException If the script is not valid.
      */
     public function setBootstrap($script);
+
+    /**
+     * Sets the compression mode for newly set paths.
+     *
+     * By default, file contents are not compressed when added to the Sqon.
+     * If a compression mode is set, new file contents added to the Sqon are
+     * automatically compressed using the compression scheme chose through the
+     * compression mode.
+     *
+     * ```php
+     * $sqon->setCompression(Sqon::GZIP);
+     * ```
+     *
+     * @param integer $mode The compression mode.
+     *
+     * @return SqonInterface A fluent interface to the Sqon manager.
+     */
+    public function setCompression($mode);
 
     /**
      * Sets the information for a path in the Sqon.

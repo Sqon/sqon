@@ -11,16 +11,11 @@ use Sqon\Path\Memory;
  * @author Kevin Herrera <kevin@herrera.io>
  *
  * @covers \Sqon\Path\Memory
+ *
+ * @coversDefaultClass \Sqon\Path\Memory
  */
 class MemoryTest extends TestCase
 {
-    /**
-     * The compression mode.
-     *
-     * @var integer
-     */
-    private $compression = Memory::GZIP;
-
     /**
      * The file contents.
      *
@@ -57,14 +52,33 @@ class MemoryTest extends TestCase
     private $type = Memory::FILE;
 
     /**
-     * Verify that the compression mode can be retrieved.
+     * Verify that a new instance can be created with only string contents.
+     *
+     * @covers ::__construct
      */
-    public function testRetrieveTheCompressionMode()
+    public function testCreateNewInstanceWithOnlyStringContents()
     {
-        self::assertEquals(
-            $this->compression,
-            $this->path->getCompression(),
-            'The compression mode was not returned.'
+        $contents = 'test';
+        $memory = new Memory($contents);
+
+        self::assertNotNull(
+            $memory->getContents(),
+            'The contents were not set properly.'
+        );
+
+        self::assertNotNull(
+            $memory->getModified(),
+            'A default modified Unix timestamp was not set.'
+        );
+
+        self::assertNotNull(
+            $memory->getPermissions(),
+            'A default Unix file permissions was not set.'
+        );
+
+        self::assertNotNull(
+            $memory->getType(),
+            'A default path type was not set.'
         );
     }
 
@@ -124,7 +138,6 @@ class MemoryTest extends TestCase
         $this->path = new Memory(
             $this->contents,
             $this->type,
-            $this->compression,
             $this->modified,
             $this->permissions
         );

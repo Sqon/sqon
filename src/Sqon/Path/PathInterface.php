@@ -12,13 +12,6 @@ use Sqon\Exception\Path\PathException;
 interface PathInterface
 {
     /**
-     * Indicates that the contents are compressed using bzip2.
-     *
-     * @var integer
-     */
-    const BZIP2 = 2;
-
-    /**
      * Indicates that the path is a directory.
      *
      * @var integer
@@ -31,27 +24,6 @@ interface PathInterface
      * @var integer
      */
     const FILE = 0;
-
-    /**
-     * Indicates that the contents are compressed using gzip.
-     *
-     * @var integer
-     */
-    const GZIP = 1;
-
-    /**
-     * Indicates that the contents are not compressed.
-     *
-     * @var integer
-     */
-    const NONE = 0;
-
-    /**
-     * Returns the compression mode for the file contents.
-     *
-     * @return integer The compression mode.
-     */
-    public function getCompression();
 
     /**
      * Returns the contents of the file.
