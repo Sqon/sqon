@@ -67,4 +67,4 @@ Version Support
 
 When submitting code, please take into consideration the current version of the PHP or HHVM interpreter supported by the Sqon project. Sqon will always target support for current LTS releases of PHP and HHVM. The [Requirements][] section of the README has more information.
 
-[Requirements]: README.md
+[Requirements]: README.md#requirements
