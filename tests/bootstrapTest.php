@@ -38,9 +38,15 @@ class bootstrapTest extends TestCase
     {
         $hello = new Memory('<?php echo "Hello, world!\n";');
         $primary = new Memory("<?php require __DIR__ . '/../hello.php';");
+        $bootstrap = str_replace(
+            "<?php\n",
+            "<?php\n\necho __COMPILER_HALT_OFFSET__, \"\\n\";\n",
+            Sqon::createBootstrap()
+        );
 
         $this
             ->sqon
+            ->setBootstrap($bootstrap)
             ->setPath(Sqon::PRIMARY, $primary)
             ->setPath('hello.php', $hello)
             ->commit()
@@ -55,7 +61,7 @@ class bootstrapTest extends TestCase
         );
 
         self::assertEquals(
-            "Hello, world!",
+            "6536\nHello, world!",
             join("\n", $output),
             'The PHP bootstrap script did not function as intended.'
         );
