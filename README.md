@@ -55,10 +55,13 @@ When you run `php project.sqon` you will see the Symfony 3 console.
 Requirements
 ------------
 
-- PHP 5.6 or greater
+- Current [PHP][] or [HHVM][] long term support release.
     - `pdo_sqlite`
     - `bz2` (if using bzip2 compression)
     - `zlib` (if using gzip compression)
+
+[HHVM]: https://docs.hhvm.com/hhvm/installation/introduction#prebuilt-packages__lts-releases
+[PHP]: https://secure.php.net/supported-versions.php
 
 Install
 -------
