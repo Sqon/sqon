@@ -131,8 +131,10 @@ class SqonTest extends TestCase
                 $dir,
                 [
                     'a',
-                    'b/c'
-                ]
+                    'b/c',
+                    'd/e/f'
+                ],
+                false
             )
         ;
 
