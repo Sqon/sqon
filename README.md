@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/Sqon/sqon.svg?branch=master)](https://travis-ci.org/Sqon/sqon)
+[![Packagist](https://img.shields.io/packagist/v/symfony/symfony.svg?maxAge=2592000)]()
+[![Packagist Pre Release](https://img.shields.io/packagist/vpre/symfony/symfony.svg?maxAge=2592000)]()
+
 ![Sqon](misc/media/logo.png)
 ============================
 
