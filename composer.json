@@ -1,6 +1,7 @@
 {
     "type": "library",
-    "name": "kherge/sqon",
+    "name": "sqon/sqon",
+    "replace": { "kherge/sqon": "*" },
     "description": "Reads and writes Sqons.",
     "keywords": ["PHP", "sqlite", "container"],
     "license": [
