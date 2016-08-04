@@ -124,6 +124,41 @@ SQL
     public function getPath($path)
     {
         foreach ($this->select('paths', ['path' => $path]) as $info) {
+            switch ($info['compression']) {
+                case self::BZIP2:
+                case self::GZIP:
+                case self::NONE:
+                    break;
+
+            // @codeCoverageIgnoreStart
+                default:
+                    throw new DatabaseException(
+                        sprintf(
+                            'The compression mode "%d" for "%s" is not recognized.',
+                            $info['compression'],
+                            $info['path']
+                        )
+                    );
+            }
+            // @codeCoverageIgnoreEnd
+
+            switch ($info['type']) {
+                case PathInterface::DIRECTORY:
+                case PathInterface::FILE:
+                    break;
+
+            // @codeCoverageIgnoreStart
+                default:
+                    throw new DatabaseException(
+                        sprintf(
+                            'The path type "%d" for "%s" is not recognized.',
+                            $info['type'],
+                            $info['path']
+                        )
+                    );
+            }
+            // @codeCoverageIgnoreEnd
+
             return new Memory(
                 $this->decompress($info['contents'], $info['compression']),
                 $info['type'],
