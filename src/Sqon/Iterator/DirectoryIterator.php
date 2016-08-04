@@ -37,14 +37,16 @@ class DirectoryIterator implements Iterator
     {
         $this->base = '/^' . preg_quote($path, '/') . '/';
 
+        $directory = new RecursiveDirectoryIterator($path);
+        $directory->setFlags(
+            $directory->getFlags()
+                | RecursiveDirectoryIterator::KEY_AS_PATHNAME
+                | RecursiveDirectoryIterator::SKIP_DOTS
+                | RecursiveDirectoryIterator::UNIX_PATHS
+        );
+
         $this->inner = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator(
-                $path,
-                RecursiveDirectoryIterator::CURRENT_AS_PATHNAME
-                    | RecursiveDirectoryIterator::KEY_AS_PATHNAME
-                    | RecursiveDirectoryIterator::SKIP_DOTS
-                    | RecursiveDirectoryIterator::UNIX_PATHS
-            ),
+            $directory,
             RecursiveIteratorIterator::SELF_FIRST
         );
     }
