@@ -146,7 +146,7 @@ SQL
     public function getPaths()
     {
         foreach ($this->select('paths', []) as $info) {
-            yield new Memory(
+            yield $info['path'] => new Memory(
                 $this->decompress($info['contents'], $info['compression']),
                 $info['type'],
                 $info['modified'],

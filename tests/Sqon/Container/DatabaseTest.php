@@ -105,28 +105,34 @@ class DatabaseTest extends TestCase
     {
         $this->insert->execute($this->values);
 
-        foreach ($this->manager->getPaths() as $path) {
+        foreach ($this->manager->getPaths() as $path => $manager) {
+            self::assertEquals(
+                $this->values['path'],
+                $path,
+                'The path was not returned properly.'
+            );
+
             self::assertEquals(
                 $this->values['contents'],
-                $path->getContents(),
+                $manager->getContents(),
                 'The file contents were not returned properly.'
             );
 
             self::assertEquals(
                 $this->values['modified'],
-                $path->getModified(),
+                $manager->getModified(),
                 'The last modified Unix timestamp was not returned properly.'
             );
 
             self::assertEquals(
                 $this->values['permissions'],
-                $path->getPermissions(),
+                $manager->getPermissions(),
                 'The Unix file permissions were not returned properly.'
             );
 
             self::assertEquals(
                 $this->values['type'],
-                $path->getType(),
+                $manager->getType(),
                 'The type of the path was not returned properly.'
             );
         }

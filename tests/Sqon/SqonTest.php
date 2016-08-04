@@ -136,7 +136,7 @@ class SqonTest extends TestCase
         );
 
         self::assertEquals(
-            [$path],
+            ['test.php' => $path],
             iterator_to_array($this->sqon->getPaths()),
             'The paths were not returned.'
         );
