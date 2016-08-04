@@ -28,6 +28,19 @@ trait TempTrait
     }
 
     /**
+     * Creates a new temporary directory.
+     *
+     * @return string The new temporary directory.
+     */
+    private function createTemporaryDirectory()
+    {
+        unlink($path = $this->createTemporaryFile());
+        mkdir($path);
+
+        return $path;
+    }
+
+    /**
      * Creates a new temporary file.
      *
      * @return string The new temporary file.
@@ -55,11 +68,30 @@ trait TempTrait
     private function deleteTemporaryFiles()
     {
         foreach ($this->temp as $file) {
-            if (file_exists($file)) {
-                unlink($file);
-            }
+            $this->deleteTemporaryPath($file);
         }
 
         $this->temp = [];
+    }
+
+    private function deleteTemporaryPath($path)
+    {
+        if (!file_exists($path)) {
+            return;
+        }
+
+        if (is_dir($path)) {
+            foreach (scandir($path) as $node) {
+                if (('.' === $node) || ('..' === $node)) {
+                    continue;
+                }
+
+                $this->deleteTemporaryPath($path . DIRECTORY_SEPARATOR . $node);
+            }
+
+            rmdir($path);
+        } else {
+            unlink($path);
+        }
     }
 }
