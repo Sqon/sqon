@@ -2,6 +2,9 @@ branches:
     only:
         - master
 
+git:
+    depth: 1
+
 install:
     - composer install
 
@@ -11,13 +14,21 @@ matrix:
 
     allow_failures:
         - php: nightly
+        - php: hhvm-nightly
 
     fast_finish: true
 
-php:
-    - 5.6
-    - 7.0
-    - nightly
-    - hhvm
+    include:
+        - php: 5.6
+        - php: 7.0
+        - php: nightly
+        - php: hhvm-3.12
+          sudo: required
+          dist: trusty
+          group: edge
+        - php: hhvm-nightly
+          sudo: required
+          dist: trusty
+          group: edge
 
 sudo: false
