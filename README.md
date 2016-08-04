@@ -127,7 +127,7 @@ The PHP bootstrap script performs the following functions:
 2. Extracts the contents of the Sqon to a cache directory.
 3. Runs the primary script, if one exists.
 
-Variables, constants, functions, and classes are not introduced into the global scope by the script. If supporting code is required for the bootstrapping process, it must exist in the `Sqon\Bootstrap` namespace.
+Variables, constants, functions, and classes are not introduced into the global scope by the script. If supporting code is required for the bootstrapping process, it must exist in the `Sqon\Bootstrap` namespace. Using the prefix `Sqon_Bootstrap_` for a function or class name is also acceptable.
 
 If the Sqon is intended to be used as a command line application, a [shebang line][] should be prepended to the PHP bootstrap script. Otherwise, the shebang line should be omitted to prevent PHP from printing it.
 
