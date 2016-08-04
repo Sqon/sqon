@@ -1,6 +1,6 @@
 after_success:
     - composer require satooshi/php-coveralls
-    - php vendors/bin/coveralls -x coverage.xml
+    - php vendor/bin/coveralls -x coverage.xml
 
 branches:
     only:
