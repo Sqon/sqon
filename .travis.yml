@@ -36,6 +36,6 @@ matrix:
           dist: trusty
           group: edge
 
-script: phpunit --coverage-clover build/logs/coverage.xml
+script: phpunit --coverage-clover build/logs/clover.xml
 
 sudo: false
