@@ -54,6 +54,23 @@ Please use the following table as a template for creating the body text for your
   </tbody>
 </table>
 
+    <table>
+      <tbody>
+        <tr>
+          <th>Type</th>
+          <td>Bug Fix</th>
+        </tr>
+        <tr>
+          <th>Issue</th>
+          <td>#123</th>
+        </tr>
+        <tr>
+          <th>Change</th>
+          <td>Patch</th>
+        </tr>
+      </tbody>
+    </table>
+
 - The **Type** field must be one of the following values:
     - Bug Fix
     - Enhancement
