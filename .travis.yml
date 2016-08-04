@@ -1,6 +1,6 @@
 after_success:
     - composer require satooshi/php-coveralls
-    - php vendor/bin/coveralls -x coverage.xml
+    - php vendor/bin/coveralls
 
 branches:
     only:
@@ -11,6 +11,7 @@ git:
 
 install:
     - composer install
+    - mkdir -p build/logs
 
 language: php
 
@@ -35,6 +36,6 @@ matrix:
           dist: trusty
           group: edge
 
-script: phpunit --coverage-clover coverage.xml
+script: phpunit --coverage-clover build/logs/coverage.xml
 
 sudo: false
