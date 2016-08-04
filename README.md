@@ -184,7 +184,7 @@ CREATE TABLE paths (
 
 > The following is information on what the schema definitions mean. For information on how this schema is actually used, you will want to read the [Bootstrap](#bootstrap) section of the specification.
 
-- The **path** field is the canonicalized, relative path to the file or directory. All paths that begin with `.sqon` are reserved by the specification.
+- The **path** field is the canonicalized, relative path to the file or directory. All paths that begin with `.sqon` are reserved by the specification. The `/` (forward slash) is always used as the directory separator. All paths are case sensitive.
 - The **type** field indicates the type of the path (e.g. file, directory).
 - The **compression** field indicates if a file has been compressed and by what scheme.
 - The **modified** field is a Unix timestamp for when the contents of the file were last modified.
