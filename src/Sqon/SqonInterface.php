@@ -101,6 +101,20 @@ interface SqonInterface
     public static function createBootstrap($shebang = null);
 
     /**
+     * Extracts the contents of the Sqon to a directory.
+     *
+     * If the given directory path does not exist, it will be automatically
+     * created. If one or more `$paths` are not specified, all paths in the
+     * Sqon will be extracted to the directory. If `$overwrite` is true, any
+     * path that already exists will be overwritten.
+     *
+     * @param string  $dir       The path to the directory to extract to.
+     * @param array   $paths     The paths in the Sqon to extract.
+     * @param boolean $overwrite Overwrite existing paths?
+     */
+    public function extractTo($dir, array $paths = [], $overwrite = true);
+
+    /**
      * Returns the PHP bootstrap script for the Sqon.
      *
      * ```php

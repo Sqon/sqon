@@ -107,6 +107,82 @@ class SqonTest extends TestCase
     }
 
     /**
+     * Verify that the contents of a Sqon can be extracted.
+     */
+    public function testExtractSqonContents()
+    {
+        $dir = $this->createTemporaryDirectory();
+        $time = time() - 10000;
+        $perms = 0600;
+
+        mkdir($dir . '/d/e', 0755, true);
+        touch($dir . '/d/e/f', $old = time() - 40000);
+
+        $a = new Memory('a', Memory::FILE, $time, $perms);
+        $c = new Memory(null, Memory::DIRECTORY, $time, $perms);
+
+        $this
+            ->sqon
+            ->setPath('a', $a)
+            ->setPath('b/c', $c)
+            ->setPath('d/e/f', new Memory(null))
+            ->setPath('x/y/z', new Memory(null))
+            ->extractTo(
+                $dir,
+                [
+                    'a',
+                    'b/c'
+                ]
+            )
+        ;
+
+        self::assertTrue(
+            is_file($dir . '/a'),
+            'The file should have been extracted.'
+        );
+
+        self::assertEquals(
+            $time,
+            filemtime($dir . '/a'),
+            'The last modified time was not set.'
+        );
+
+        self::assertEquals(
+            decoct($perms),
+            substr(sprintf('%o', fileperms($dir . '/a')), -3, 3),
+            'The file permissions were not set.'
+        );
+
+        self::assertTrue(
+            is_dir($dir . '/b/c'),
+            'The directory should have been extracted.'
+        );
+
+        self::assertEquals(
+            $time,
+            filemtime($dir . '/b/c'),
+            'The last modified time was not set.'
+        );
+
+        self::assertEquals(
+            decoct($perms),
+            substr(sprintf('%o', fileperms($dir . '/b/c')), -3, 3),
+            'The directory permissions were not set.'
+        );
+
+        self::assertEquals(
+            $old,
+            filemtime($dir . '/d/e/f'),
+            'The original file should not have been overwritten.'
+        );
+
+        self::assertFileNotExists(
+            $dir . '/x/y/z',
+            'The excluded file should not have been extracted.'
+        );
+    }
+
+    /**
      * Verify that a path can be manages in the Sqon.
      */
     public function testManagePathsInTheSqon()

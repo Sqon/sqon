@@ -113,6 +113,36 @@ class Sqon implements SqonInterface
     /**
      * {@inheritdoc}
      */
+    public function extractTo($dir, array $paths = [], $overwrite = true)
+    {
+        foreach ($this->database->getPaths() as $path => $manager) {
+            if (!empty($paths) && !in_array($path, $paths)) {
+                continue;
+            }
+
+            $path = $dir . DIRECTORY_SEPARATOR . $path;
+
+            if (!$overwrite && file_exists($path)) {
+                continue;
+            }
+
+            switch ($manager->getType()) {
+                case PathInterface::DIRECTORY:
+                    $this->extractDir($path, $manager);
+
+                    break;
+
+                case PathInterface::FILE:
+                    $this->extractFile($path, $manager);
+
+                    break;
+            }
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function getBootstrap()
     {
         return $this->bootstrap;
@@ -342,5 +372,84 @@ class Sqon implements SqonInterface
         }
 
         return join('/', $path);
+    }
+
+    /**
+     * Extracts a directory path.
+     *
+     * @param string        $path        The path to create.
+     * @param PathInterface $manager     The path manager.
+     *
+     * @throws SqonException If the directory could not be extracted.
+     */
+    private function extractDir($path, PathInterface $manager)
+    {
+        if (!is_dir($path) && !mkdir($path, 0755, true)) {
+            // @codeCoverageIgnoreStart
+            throw new SqonException(
+                "The directory \"$path\" could not be created."
+            );
+            // @codeCoverageIgnoreEnd
+        }
+
+        $this->setAttributes($path, $manager);
+    }
+
+    /**
+     * Extracts a file path.
+     *
+     * @param string        $path        The path to create.
+     * @param PathInterface $manager     The path manager.
+     *
+     * @throws SqonException If the file could not be extracted.
+     */
+    private function extractFile($path, PathInterface $manager)
+    {
+        $dir = dirname($path);
+
+        if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
+            // @codeCoverageIgnoreStart
+            throw new SqonException(
+                "The directory \"$dir\" could not be created."
+            );
+            // @codeCoverageIgnoreEnd
+        }
+
+        if (!file_put_contents($path, $manager->getContents())) {
+            // @codeCoverageIgnoreStart
+            throw new SqonException(
+                "The file \"$path\" could not be written."
+            );
+            // @codeCoverageIgnoreEnd
+        }
+
+        $this->setAttributes($path, $manager);
+    }
+
+    /**
+     * Sets the attributes for an extracted path.
+     *
+     * @param string        $path    The path to modify.
+     * @param PathInterface $manager The path manager.
+     *
+     * @throws SqonException If the attributes could not be set.
+     */
+    private function setAttributes($path, PathInterface $manager)
+    {
+        if (!chmod($path, $manager->getPermissions())) {
+            // @codeCoverageIgnoreStart
+            throw new SqonException(
+                "The permissions could not be set for \"$path\"."
+            );
+            // @codeCoverageIgnoreEnd
+        }
+
+        if (!touch($path, $manager->getModified())) {
+            // @codeCoverageIgnoreStart
+            throw new SqonException(
+                "The modified timestamp could not be set for \"$path\"."
+            );
+            // @codeCoverageIgnoreEnd
+        }
     }
 }
