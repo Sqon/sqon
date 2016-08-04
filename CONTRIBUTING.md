@@ -25,6 +25,13 @@ Code submissions must follow the [PSR-2][] coding style guide.
 
 [PSR-2]: http://www.php-fig.org/psr/psr-2/
 
+Issues
+------
+
+When creating a new issue, please provide as much detail as you can about the issue in the description. If the issue is a bug, please provide a minimal code sample that will replicate the issue for everyone else. Please be sure to also specify the version or commit number of the library that you are using. The title of the issue should be a summary of the description that includes the subject (e.g. "The bootstrap script") and problem (e.g. "does not have a shebang line.").
+
+If you find that you are affected by an open issue, please use GitHub's reactions to share how it affects. Using `+1` indicates that the issue also impacts you, `-1` if you feel that the issue will have a negative impact on you, and `Heart` if the issue is something on your wishlist. Posting a comment to the same effect will be deleted. Please only post comments if you are able to provide additional relevant information.
+
 Pull Requests
 -------------
 
