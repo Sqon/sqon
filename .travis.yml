@@ -2,6 +2,8 @@ branches:
     only:
         - master
 
+dist: trusty
+
 install:
     - composer install
 
@@ -22,4 +24,4 @@ php:
     - nightly
     - hhvm-nightly
 
-sudo: false
+sudo: required
