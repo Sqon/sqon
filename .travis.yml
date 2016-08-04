@@ -1,6 +1,6 @@
 after_success:
     - composer require satooshi/php-coveralls
-    - travis_ci php vendors/bin/coveralls -x coverage.xml
+    - php vendors/bin/coveralls -x coverage.xml
 
 branches:
     only:
