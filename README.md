@@ -182,7 +182,7 @@ CREATE TABLE paths (
     permissions INTEGER NOT NULL,
 
     -- The contents of the file.
-    contents BLOG,
+    contents BLOB,
 
     PRIMARY KEY (path)
 );
