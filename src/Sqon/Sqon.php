@@ -415,7 +415,7 @@ class Sqon implements SqonInterface
             // @codeCoverageIgnoreEnd
         }
 
-        if (!file_put_contents($path, $manager->getContents())) {
+        if (false === file_put_contents($path, $manager->getContents())) {
             // @codeCoverageIgnoreStart
             throw new SqonException(
                 "The file \"$path\" could not be written."
