@@ -1,6 +1,10 @@
 ## Problem
 
-I am unable to...
+I have a problem with version 1.2.3...
+
+```php
+// My example code to reproduce the issue.
+```
 
 ## Resolution
 
