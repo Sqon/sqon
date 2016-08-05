@@ -89,6 +89,16 @@ class Database
     }
 
     /**
+     * Returns the total number of paths.
+     *
+     * @return integer The number of paths.
+     */
+    public function countPaths()
+    {
+        return $this->count('paths', []);
+    }
+
+    /**
      * Creates the database schema for a new Sqon.
      */
     public function createSchema()

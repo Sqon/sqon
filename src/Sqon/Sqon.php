@@ -72,6 +72,14 @@ class Sqon implements SqonInterface
     /**
      * {@inheritdoc}
      */
+    public function count()
+    {
+        return $this->database->countPaths();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public static function create($path, $bootstrap = null)
     {
         if (null === $bootstrap) {

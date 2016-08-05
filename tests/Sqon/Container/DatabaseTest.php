@@ -99,6 +99,26 @@ class DatabaseTest extends TestCase
     }
 
     /**
+     * Verify that the number of paths can be counted.
+     */
+    public function testCountTotalNumberOfPaths()
+    {
+        self::assertEquals(
+            0,
+            $this->manager->countPaths(),
+            'There should be no paths in the database.'
+        );
+
+        $this->insert->execute($this->values);
+
+        self::assertEquals(
+            1,
+            $this->manager->countPaths(),
+            'There should be exactly one path in the database.'
+        );
+    }
+
+    /**
      * Verify that all path scan be retrieved.
      */
     public function testRetrieveAllAvailablePaths()

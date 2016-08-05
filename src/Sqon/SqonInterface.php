@@ -2,6 +2,7 @@
 
 namespace Sqon;
 
+use Countable;
 use Generator;
 use Iterator;
 use Sqon\Container\Database;
@@ -13,7 +14,7 @@ use Sqon\Path\PathInterface;
  *
  * @author Kevin Herrera <kevin@herrera.io>
  */
-interface SqonInterface
+interface SqonInterface extends Countable
 {
     /**
      * Indicates that the contents are compressed using bzip2.
@@ -56,6 +57,17 @@ interface SqonInterface
      * ```
      */
     public function commit();
+
+    /**
+     * Returns the total number of paths in the Sqon.
+     *
+     * ```php
+     * $count = count($sqon);
+     * ```
+     *
+     * @return integer The total number of paths.
+     */
+    public function count();
 
     /**
      * Creates a new Sqon.

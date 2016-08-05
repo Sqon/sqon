@@ -184,6 +184,23 @@ class SqonTest extends TestCase
         );
     }
 
+    public function testCountPathsInSqon()
+    {
+        self::assertEquals(
+            0,
+            count($this->sqon),
+            'There should be no paths in the database.'
+        );
+
+        $this->sqon->setPath('a', new Memory());
+
+        self::assertEquals(
+            1,
+            count($this->sqon),
+            'There should be exactly one path in the database.'
+        );
+    }
+
     /**
      * Verify that a path can be manages in the Sqon.
      */
