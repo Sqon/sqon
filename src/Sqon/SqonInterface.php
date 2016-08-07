@@ -8,6 +8,7 @@ use Iterator;
 use Sqon\Container\Database;
 use Sqon\Exception\SqonException;
 use Sqon\Path\PathInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Defines the public interface for a Sqon manager.
@@ -55,6 +56,11 @@ interface SqonInterface extends Countable
      * ```php
      * $sqon->commit();
      * ```
+     *
+     * Observable events:
+     *
+     * - `CommitEvent::BEFORE`
+     * - `CommitEvent::AFTER`
      */
     public function commit();
 
@@ -136,6 +142,21 @@ interface SqonInterface extends Countable
      * @return string The PHP bootstrap script.
      */
     public function getBootstrap();
+
+    /**
+     * Returns the event dispatcher.
+     *
+     * ```php
+     * $dispatcher = $sqon->getEventDispatcher();
+     *
+     * if (null !== $dispatcher) {
+     *     // ...
+     * }
+     * ```
+     *
+     * @return EventDispatcherInterface|null The event dispatcher.
+     */
+    public function getEventDispatcher();
 
     /**
      * Returns the path manager for a path stored in the Sqon.
@@ -268,6 +289,38 @@ interface SqonInterface extends Countable
      * @return SqonInterface A fluent interface to the Sqon manager.
      */
     public function setCompression($mode);
+
+    /**
+     * Sets the event dispatcher.
+     *
+     * An event dispatcher can be registered with the Sqon manager to allow
+     * for certain processes to be modified by event listeners. Each process
+     * can be observed before or after an action has occurred. The following
+     * processes can be observed:
+     *
+     * - `commit()`
+     * - `extractTo()`
+     * - `setBootstrap()`
+     * - `setPath()`
+     * - `setPathsUsingIterator()`
+     *
+     * > It is important to note that using this functionality could cause a
+     * > a significant impact to performance for certain processes. An example
+     * > would be registering a listener that modifies file contents as they
+     * > are set in the Sqon, which would slow down the rate at which paths can
+     * > be set in the Sqon.
+     *
+     * ```php
+     * $sqon->setEventDispatcher(new EventDispatcher());
+     * ```
+     *
+     * @param EventDispatcherInterface|null $dispatcher The event dispatcher.
+     *
+     * @return SqonInterface A fluent interface to the Sqon manager.
+     */
+    public function setEventDispatcher(
+        EventDispatcherInterface $dispatcher = null
+    );
 
     /**
      * Sets the information for a path in the Sqon.
