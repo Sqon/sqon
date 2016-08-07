@@ -18,6 +18,8 @@ All work in the repository is released under the MIT and Apache 2.0 licenses. Fo
 
 If the statement is not included your submission will not be included in any release of Sqon. You will likely be notified that the statement is missing and you will have time to correct that mistake.
 
+Please note that open issues and pull requests that are inactive for 30 days will be labeled as "inactive" and closed. The issue or pull request may only be reopened if new activity is available (e.g. new comment, new/changed commits).
+
 Style Guide
 -----------
 
