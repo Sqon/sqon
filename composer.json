@@ -43,7 +43,8 @@
     "require": {
         "php": ">=5.6",
         "ext-pdo_sqlite": "*",
-        "kherge/file-manager": "^1.1"
+        "kherge/file-manager": "^1.1",
+        "symfony/event-dispatcher": "^2.7"
     },
 
     "require-dev": {
