@@ -6,6 +6,7 @@ use ArrayIterator;
 use PHPUnit_Framework_TestCase as TestCase;
 use Sqon\Path\Memory;
 use Sqon\Sqon;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Test\Sqon\Test\TempTrait;
 
 /**
@@ -322,6 +323,26 @@ class SqonTest extends TestCase
             $path,
             $this->sqon->getPath('dir/test.php'),
             'The path from the iterator was not added.'
+        );
+    }
+
+    /**
+     * Verify that the event dispatcher can be set and retrieved.
+     */
+    public function testSetAndRetrieveTheEventDispatcher()
+    {
+        $dispatcher = new EventDispatcher();
+
+        self::assertSame(
+            $this->sqon,
+            $this->sqon->setEventDispatcher($dispatcher),
+            'The event dispatcher setter did not return a fluent interface.'
+        );
+
+        self::assertSame(
+            $dispatcher,
+            $this->sqon->getEventDispatcher(),
+            'The event dispatcher was not returned.'
         );
     }
 

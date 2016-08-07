@@ -14,6 +14,7 @@ use Sqon\Container\Writer;
 use Sqon\Exception\Container\DatabaseException;
 use Sqon\Exception\SqonException;
 use Sqon\Path\PathInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Manages an individual Sqon.
@@ -49,6 +50,13 @@ class Sqon implements SqonInterface
      * @var string
      */
     private $databaseFile;
+
+    /**
+     * The event dispatcher.
+     *
+     * @var EventDispatcherInterface
+     */
+    private $eventDispatcher;
 
     /**
      * The path to the Sqon.
@@ -154,6 +162,14 @@ class Sqon implements SqonInterface
     public function getBootstrap()
     {
         return $this->bootstrap;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getEventDispatcher()
+    {
+        return $this->eventDispatcher;
     }
 
     /**
@@ -278,6 +294,17 @@ class Sqon implements SqonInterface
     public function setCompression($mode)
     {
         $this->database->setCompression($mode);
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setEventDispatcher(
+        EventDispatcherInterface $dispatcher = null
+    ) {
+        $this->eventDispatcher = $dispatcher;
 
         return $this;
     }
