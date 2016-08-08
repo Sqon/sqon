@@ -11,6 +11,16 @@ use Sqon\Container\Database;
 use Sqon\Container\Reader;
 use Sqon\Container\Signature;
 use Sqon\Container\Writer;
+use Sqon\Event\AfterCommitEvent;
+use Sqon\Event\AfterExtractToEvent;
+use Sqon\Event\AfterSetBootstrapEvent;
+use Sqon\Event\AfterSetPathEvent;
+use Sqon\Event\AfterSetPathsUsingIteratorEvent;
+use Sqon\Event\BeforeCommitEvent;
+use Sqon\Event\BeforeExtractToEvent;
+use Sqon\Event\BeforeSetBootstrapEvent;
+use Sqon\Event\BeforeSetPathEvent;
+use Sqon\Event\BeforeSetPathsUsingIteratorEvent;
 use Sqon\Exception\Container\DatabaseException;
 use Sqon\Exception\SqonException;
 use Sqon\Path\PathInterface;
@@ -70,11 +80,15 @@ class Sqon implements SqonInterface
      */
     public function commit()
     {
+        $this->dispatch(BeforeCommitEvent::NAME, BeforeCommitEvent::class);
+
         (new Writer())->write(
             new File($this->path, 'w+'),
             new Memory($this->bootstrap, false),
             new File($this->databaseFile, 'r')
         );
+
+        $this->dispatch(AfterCommitEvent::NAME, AfterCommitEvent::class);
     }
 
     /**
@@ -131,6 +145,25 @@ class Sqon implements SqonInterface
      */
     public function extractTo($dir, array $paths = [], $overwrite = true)
     {
+        $this->dispatch(
+            BeforeExtractToEvent::NAME,
+            BeforeExtractToEvent::class,
+            // @codeCoverageIgnoreStart
+            function (BeforeExtractToEvent $event) use (
+                &$dir,
+                &$paths,
+                &$overwrite
+            ) {
+            // @codeCoverageIgnoreEnd
+                $dir = $event->getDir();
+                $paths = $event->getPaths();
+                $overwrite = $event->isOverwrite();
+            },
+            $dir,
+            $paths,
+            $overwrite
+        );
+
         foreach ($this->database->getPaths() as $path => $manager) {
             if (!empty($paths) && !in_array($path, $paths)) {
                 continue;
@@ -154,6 +187,15 @@ class Sqon implements SqonInterface
                     break;
             }
         }
+
+        $this->dispatch(
+            AfterExtractToEvent::NAME,
+            AfterExtractToEvent::class,
+            null,
+            $dir,
+            $paths,
+            $overwrite
+        );
     }
 
     /**
@@ -267,6 +309,15 @@ class Sqon implements SqonInterface
      */
     public function setBootstrap($script)
     {
+        $this->dispatch(
+            BeforeSetBootstrapEvent::NAME,
+            BeforeSetBootstrapEvent::class,
+            function (BeforeSetBootstrapEvent $event) use (&$script) {
+                $script = $event->getScript();
+            },
+            $script
+        );
+
         if (!preg_match('{^(?:#![^\n\r]+[\n\r]+)?<\?php}', $script)) {
             // @codeCoverageIgnoreStart
             throw new SqonException(
@@ -284,6 +335,13 @@ class Sqon implements SqonInterface
         }
 
         $this->bootstrap = $script;
+
+        $this->dispatch(
+            AfterSetBootstrapEvent::NAME,
+            AfterSetBootstrapEvent::class,
+            null,
+            $script
+        );
 
         return $this;
     }
@@ -314,7 +372,26 @@ class Sqon implements SqonInterface
      */
     public function setPath($path, PathInterface $manager)
     {
+        $this->dispatch(
+            BeforeSetPathEvent::NAME,
+            BeforeSetPathEvent::class,
+            function (BeforeSetPathEvent $event) use (&$path, &$manager) {
+                $manager = $event->getManager();
+                $path = $event->getPath();
+            },
+            $path,
+            $manager
+        );
+
         $this->database->setPath($this->cleanPath($path), $manager);
+
+        $this->dispatch(
+            AfterSetPathEvent::NAME,
+            AfterSetPathEvent::class,
+            null,
+            $path,
+            $manager
+        );
 
         return $this;
     }
@@ -324,6 +401,15 @@ class Sqon implements SqonInterface
      */
     public function setPathsUsingIterator(Iterator $iterator)
     {
+        $this->dispatch(
+            BeforeSetPathsUsingIteratorEvent::NAME,
+            BeforeSetPathsUsingIteratorEvent::class,
+            function (BeforeSetPathsUsingIteratorEvent $event) use (&$iterator) {
+                $iterator = $event->getIterator();
+            },
+            $iterator
+        );
+
         $this->database->begin();
 
         try {
@@ -356,6 +442,13 @@ class Sqon implements SqonInterface
         // @codeCoverageIgnoreEnd
 
         $this->database->commit();
+
+        $this->dispatch(
+            AfterSetPathsUsingIteratorEvent::NAME,
+            AfterSetPathsUsingIteratorEvent::class,
+            null,
+            $iterator
+        );
 
         return $this;
     }
@@ -407,6 +500,33 @@ class Sqon implements SqonInterface
         }
 
         return join('/', $path);
+    }
+
+    /**
+     * Dispatches an event if a dispatcher is registered.
+     *
+     * @param string        $name          The name of the event.
+     * @param string        $class         The name of the event class.
+     * @param callable|null $result        The event result handler.
+     * @param mixed         $arguments,... The event constructor arguments.
+     */
+    private function dispatch(
+        $name,
+        $class,
+        callable $result = null,
+        // @codeCoverageIgnoreStart
+        ...$arguments
+    ) {
+        // @codeCoverageIgnoreEnd
+        if (null !== $this->eventDispatcher) {
+            $event = new $class($this, ...$arguments);
+
+            $this->eventDispatcher->dispatch($name, $event);
+
+            if (null !== $result) {
+                $result($event);
+            }
+        }
     }
 
     /**

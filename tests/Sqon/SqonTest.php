@@ -4,6 +4,14 @@ namespace Test\Sqon;
 
 use ArrayIterator;
 use PHPUnit_Framework_TestCase as TestCase;
+use Sqon\Event\AfterCommitEvent;
+use Sqon\Event\AfterExtractToEvent;
+use Sqon\Event\AfterSetPathEvent;
+use Sqon\Event\AfterSetPathsUsingIteratorEvent;
+use Sqon\Event\BeforeCommitEvent;
+use Sqon\Event\BeforeExtractToEvent;
+use Sqon\Event\BeforeSetPathEvent;
+use Sqon\Event\BeforeSetPathsUsingIteratorEvent;
 use Sqon\Path\Memory;
 use Sqon\Sqon;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -19,6 +27,23 @@ use Test\Sqon\Test\TempTrait;
 class SqonTest extends TestCase
 {
     use TempTrait;
+
+    /**
+     * The event dispatcher.
+     *
+     * @var EventDispatcher
+     */
+    private $eventDispatcher;
+
+    /**
+     * The invoked events.
+     *
+     * @var array
+     */
+    private $events = [
+        AfterCommitEvent::NAME => false,
+        BeforeCommitEvent::NAME => false,
+    ];
 
     /**
      * The path to the Sqon file.
@@ -39,6 +64,20 @@ class SqonTest extends TestCase
      */
     public function testCommitChangesToDisk()
     {
+        $this->eventDispatcher->addListener(
+            BeforeCommitEvent::NAME,
+            function () {
+                $this->events[BeforeCommitEvent::NAME] = true;
+            }
+        );
+
+        $this->eventDispatcher->addListener(
+            AfterCommitEvent::NAME,
+            function () {
+                $this->events[AfterCommitEvent::NAME] = true;
+            }
+        );
+
         self::assertFileNotExists(
             $this->file,
             'The Sqon should exist yet.'
@@ -49,6 +88,22 @@ class SqonTest extends TestCase
         self::assertFileExists(
             $this->file,
             'The Sqon should have been created.'
+        );
+
+        self::assertTrue(
+            $this->events[BeforeCommitEvent::NAME],
+            sprintf(
+                'The "%s" event was not dispatched.',
+                BeforeCommitEvent::NAME
+            )
+        );
+
+        self::assertTrue(
+            $this->events[AfterCommitEvent::NAME],
+            sprintf(
+                'The "%s" event was not dispatched.',
+                AfterCommitEvent::NAME
+            )
         );
     }
 
@@ -112,6 +167,20 @@ class SqonTest extends TestCase
      */
     public function testExtractSqonContents()
     {
+        $this->eventDispatcher->addListener(
+            BeforeExtractToEvent::NAME,
+            function () {
+                $this->events[BeforeExtractToEvent::NAME] = true;
+            }
+        );
+
+        $this->eventDispatcher->addListener(
+            AfterExtractToEvent::NAME,
+            function () {
+                $this->events[AfterExtractToEvent::NAME] = true;
+            }
+        );
+
         $dir = $this->createTemporaryDirectory();
         $time = time() - 10000;
         $perms = 0600;
@@ -138,6 +207,22 @@ class SqonTest extends TestCase
                 false
             )
         ;
+
+        self::assertTrue(
+            $this->events[BeforeExtractToEvent::NAME],
+            sprintf(
+                'The "%s" event was not dispatched.',
+                BeforeExtractToEvent::NAME
+            )
+        );
+
+        self::assertTrue(
+            $this->events[AfterExtractToEvent::NAME],
+            sprintf(
+                'The "%s" event was not dispatched.',
+                AfterExtractToEvent::NAME
+            )
+        );
 
         self::assertTrue(
             is_file($dir . '/a'),
@@ -214,10 +299,40 @@ class SqonTest extends TestCase
             'The path should not exist.'
         );
 
+        $this->eventDispatcher->addListener(
+            BeforeSetPathEvent::NAME,
+            function () {
+                $this->events[BeforeSetPathEvent::NAME] = true;
+            }
+        );
+
+        $this->eventDispatcher->addListener(
+            AfterSetPathEvent::NAME,
+            function () {
+                $this->events[AfterSetPathEvent::NAME] = true;
+            }
+        );
+
         self::assertSame(
             $this->sqon,
             $this->sqon->setPath('test.php', $path),
             'The path setter did not return a fluent interface.'
+        );
+
+        self::assertTrue(
+            $this->events[BeforeSetPathEvent::NAME],
+            sprintf(
+                'The "%s" event was not dispatched.',
+                BeforeSetPathEvent::NAME
+            )
+        );
+
+        self::assertTrue(
+            $this->events[AfterSetPathEvent::NAME],
+            sprintf(
+                'The "%s" event was not dispatched.',
+                AfterSetPathEvent::NAME
+            )
         );
 
         self::assertTrue(
@@ -306,6 +421,20 @@ class SqonTest extends TestCase
      */
     public function testAddPathsUsingAnIterator()
     {
+        $this->eventDispatcher->addListener(
+            BeforeSetPathsUsingIteratorEvent::NAME,
+            function () {
+                $this->events[BeforeSetPathsUsingIteratorEvent::NAME] = true;
+            }
+        );
+
+        $this->eventDispatcher->addListener(
+            AfterSetPathsUsingIteratorEvent::NAME,
+            function () {
+                $this->events[AfterSetPathsUsingIteratorEvent::NAME] = true;
+            }
+        );
+
         $path = new Memory('test');
         $iterator = new ArrayIterator(
             [
@@ -317,6 +446,22 @@ class SqonTest extends TestCase
             $this->sqon,
             $this->sqon->setPathsUsingIterator($iterator),
             'The iterator setter did not return a fluent interface.'
+        );
+
+        self::assertTrue(
+            $this->events[BeforeSetPathsUsingIteratorEvent::NAME],
+            sprintf(
+                'The "%s" event was not dispatched.',
+                BeforeSetPathsUsingIteratorEvent::NAME
+            )
+        );
+
+        self::assertTrue(
+            $this->events[AfterSetPathsUsingIteratorEvent::NAME],
+            sprintf(
+                'The "%s" event was not dispatched.',
+                AfterSetPathsUsingIteratorEvent::NAME
+            )
         );
 
         self::assertEquals(
@@ -351,10 +496,13 @@ class SqonTest extends TestCase
      */
     protected function setUp()
     {
+        $this->eventDispatcher = new EventDispatcher();
+
         $this->file = $this->createTemporaryFile();
 
         unlink($this->file);
 
         $this->sqon = Sqon::create($this->file);
+        $this->sqon->setEventDispatcher($this->eventDispatcher);
     }
 }
