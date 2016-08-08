@@ -25,7 +25,7 @@ class DirectoryIteratorTest extends TestCase
     /**
      * Verify that iterator returns path managers for the directories and files.
      */
-    public function testIteratoReturnsPathManagersForDirectoriesAndFiles()
+    public function testIteratorReturnsPathManagersForDirectoriesAndFiles()
     {
         $managers = [];
 
