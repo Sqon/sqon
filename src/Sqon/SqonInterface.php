@@ -59,8 +59,8 @@ interface SqonInterface extends Countable
      *
      * Observable events:
      *
-     * - `CommitEvent::BEFORE`
-     * - `CommitEvent::AFTER`
+     * - `Sqon\Event\BeforeCommitEvent::NAME`
+     * - `Sqon\Event\AfterCommitEvent::NAME`
      */
     public function commit();
 
@@ -125,6 +125,11 @@ interface SqonInterface extends Countable
      * created. If one or more `$paths` are not specified, all paths in the
      * Sqon will be extracted to the directory. If `$overwrite` is true, any
      * path that already exists will be overwritten.
+     *
+     * Observable events:
+     *
+     * - `Sqon\Event\BeforeExtractToEvent::NAME`
+     * - `Sqon\Event\AfterExtractToEvent::NAME`
      *
      * @param string   $dir       The path to the directory to extract to.
      * @param string[] $paths     The paths in the Sqon to extract.
@@ -264,6 +269,11 @@ interface SqonInterface extends Countable
      * $sqon->setBootstrap($script);
      * ```
      *
+     * Observable events:
+     *
+     * - `Sqon\Event\BeforeSetBootstrapEvent::NAME`
+     * - `Sqon\Event\AfterSetBootstrapEvent::NAME`
+     *
      * @param string $script The PHP bootstrap script.
      *
      * @return SqonInterface A fluent interface to the Sqon manager.
@@ -329,6 +339,11 @@ interface SqonInterface extends Countable
      * $sqon->setPath('path/inside/sqon.php', $path);
      * ```
      *
+     * Observable events:
+     *
+     * - `Sqon\Event\BeforeSetPathEvent::NAME`
+     * - `Sqon\Event\AfterSetPathEvent::NAME`
+     *
      * @param string        $path    The path to set.
      * @param PathInterface $manager The path manager.
      *
@@ -346,6 +361,11 @@ interface SqonInterface extends Countable
      * ```php
      * $sqon->setUsingIterator($iterator);
      * ```
+     *
+     * Observable events:
+     *
+     * - `Sqon\Event\BeforeSetPathsUsingIteratorEvent::NAME`
+     * - `Sqon\Event\AfterSetPathsUsingIteratorEvent::NAME`
      *
      * @param Iterator $iterator The path manager iterator.
      *
