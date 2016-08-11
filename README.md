@@ -1,8 +1,6 @@
 [![Build Status](https://travis-ci.org/Sqon/sqon.svg?branch=master)](https://travis-ci.org/Sqon/sqon)
 [![Coverage Status](https://coveralls.io/repos/github/Sqon/sqon/badge.svg?branch=master)](https://coveralls.io/github/Sqon/sqon?branch=master)
 [![SensioLabsInsight](https://insight.sensiolabs.com/projects/c2a0df64-ebed-4f74-8300-e94ebf43dc40/mini.png)](https://insight.sensiolabs.com/projects/c2a0df64-ebed-4f74-8300-e94ebf43dc40)
-[![Packagist](https://img.shields.io/packagist/v/sqon/sqon.svg?maxAge=2592000)]()
-[![Packagist Pre Release](https://img.shields.io/packagist/vpre/sqon/sqon.svg?maxAge=2592000)]()
 
 ![Sqon](misc/media/logo.png)
 ============================
