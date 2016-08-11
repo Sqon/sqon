@@ -45,9 +45,9 @@ class DirectoryIteratorTest extends TestCase
     }
 
     /**
-     * Verify that an alternative base path can be specified.
+     * Verify that a base path can be specified.
      */
-    public function testUseAlternativeBasePathForSettingPaths()
+    public function testUseBasePathForSettingPaths()
     {
         $managers = [];
         $iterator = new DirectoryIterator($this->path, dirname($this->path));
@@ -62,6 +62,30 @@ class DirectoryIteratorTest extends TestCase
                 "/$dir/a" => new File($this->path . '/a'),
                 "/$dir/sub" => new File($this->path . '/sub'),
                 "/$dir/sub/b" => new File($this->path . '/sub/b')
+            ],
+            $managers,
+            'The expected path managers were not returned.'
+        );
+    }
+
+    /**
+     * Verify that an alternative path can be specified.
+     */
+    public function testUseAlternativePathForSettingPaths()
+    {
+        $managers = [];
+        $iterator = new DirectoryIterator($this->path, null, '/alt');
+        $dir = basename($this->path);
+
+        foreach ($iterator as $path => $manager) {
+            $managers[$path] = $manager;
+        }
+
+        self::assertEquals(
+            [
+                "/alt/a" => new File($this->path . '/a'),
+                "/alt/sub" => new File($this->path . '/sub'),
+                "/alt/sub/b" => new File($this->path . '/sub/b')
             ],
             $managers,
             'The expected path managers were not returned.'

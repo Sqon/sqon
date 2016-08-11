@@ -15,6 +15,13 @@ use Sqon\Path\File;
 class DirectoryIterator implements Iterator
 {
     /**
+     * The alternative path.
+     *
+     * @var string
+     */
+    private $alternative;
+
+    /**
      * The base directory path.
      *
      * @var string
@@ -31,15 +38,20 @@ class DirectoryIterator implements Iterator
     /**
      * Initializes the new directory iterator.
      *
-     * The `$base` directory path is used to convert the `$path` into a path
-     * that is relative to the `$base` path. If a `$base` path is not given,
-     * the `$path` itself will be used as the `$base` path.
+     * By default, the `$path` is used as the base directory path for making
+     * paths returned by the iterator into relative paths. An alternative path
+     * can be set as the `$base` path. If an `$alternative` path is provided,
+     * it is used to replace the `$base` path (e.g. `/base/path/to` becomes
+     * `alternative/path/to`).
      *
-     * @param string $path The path to the directory.
-     * @param string $base The base directory path.
+     * @param string      $path        The path to the directory.
+     * @param null|string $base        The base directory path.
+     * @param string      $alternative The path to replace the base directory path with.
      */
-    public function __construct($path, $base = null)
+    public function __construct($path, $base = null, $alternative = '')
     {
+        $this->alternative = $alternative;
+
         if (null === $base) {
             $base = $path;
         }
@@ -73,7 +85,11 @@ class DirectoryIterator implements Iterator
      */
     public function key()
     {
-        return preg_replace($this->base, '', $this->inner->key());
+        return preg_replace(
+            $this->base,
+            $this->alternative,
+            $this->inner->key()
+        );
     }
 
     /**
