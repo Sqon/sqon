@@ -31,11 +31,20 @@ class DirectoryIterator implements Iterator
     /**
      * Initializes the new directory iterator.
      *
+     * The `$base` directory path is used to convert the `$path` into a path
+     * that is relative to the `$base` path. If a `$base` path is not given,
+     * the `$path` itself will be used as the `$base` path.
+     *
      * @param string $path The path to the directory.
+     * @param string $base The base directory path.
      */
-    public function __construct($path)
+    public function __construct($path, $base = null)
     {
-        $this->base = '/^' . preg_quote($path, '/') . '/';
+        if (null === $base) {
+            $base = $path;
+        }
+
+        $this->base = '/^' . preg_quote($base, '/') . '/';
 
         $directory = new RecursiveDirectoryIterator($path);
         $directory->setFlags(
