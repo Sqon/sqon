@@ -76,6 +76,16 @@ class Sqon implements SqonInterface
     private $path;
 
     /**
+     * Delete the temporary database file.
+     */
+    public function __destruct()
+    {
+        $this->database = null;
+
+        unlink($this->databaseFile);
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function commit()
