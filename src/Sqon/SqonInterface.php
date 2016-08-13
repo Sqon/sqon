@@ -57,7 +57,7 @@ interface SqonInterface extends Countable
      * $sqon->commit();
      * ```
      *
-     * Observable events:
+     * **Events:**
      *
      * - `Sqon\Event\BeforeCommitEvent::NAME`
      * - `Sqon\Event\AfterCommitEvent::NAME`
@@ -126,7 +126,7 @@ interface SqonInterface extends Countable
      * Sqon will be extracted to the directory. If `$overwrite` is true, any
      * path that already exists will be overwritten.
      *
-     * Observable events:
+     * **Events:**
      *
      * - `Sqon\Event\BeforeExtractToEvent::NAME`
      * - `Sqon\Event\AfterExtractToEvent::NAME`
@@ -269,7 +269,7 @@ interface SqonInterface extends Countable
      * $sqon->setBootstrap($script);
      * ```
      *
-     * Observable events:
+     * **Events:**
      *
      * - `Sqon\Event\BeforeSetBootstrapEvent::NAME`
      * - `Sqon\Event\AfterSetBootstrapEvent::NAME`
@@ -305,8 +305,8 @@ interface SqonInterface extends Countable
      *
      * An event dispatcher can be registered with the Sqon manager to allow
      * for certain processes to be modified by event listeners. Each process
-     * can be observed before or after an action has occurred. The following
-     * processes can be observed:
+     * can be listened to before or after it has been executed. The following
+     * processes can be listened to:
      *
      * - `commit()`
      * - `extractTo()`
@@ -339,7 +339,7 @@ interface SqonInterface extends Countable
      * $sqon->setPath('path/inside/sqon.php', $path);
      * ```
      *
-     * Observable events:
+     * **Events:**
      *
      * - `Sqon\Event\BeforeSetPathEvent::NAME`
      * - `Sqon\Event\AfterSetPathEvent::NAME`
@@ -362,7 +362,7 @@ interface SqonInterface extends Countable
      * $sqon->setUsingIterator($iterator);
      * ```
      *
-     * Observable events:
+     * **Events:**
      *
      * - `Sqon\Event\BeforeSetPathsUsingIteratorEvent::NAME`
      * - `Sqon\Event\AfterSetPathsUsingIteratorEvent::NAME`
