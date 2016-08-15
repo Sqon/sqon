@@ -365,6 +365,18 @@ class SqonTest extends TestCase
     }
 
     /**
+     * Verify that the path to commit the Sqon to is returned.
+     */
+    public function testGetPathForTheSqon()
+    {
+        self::assertEquals(
+            $this->file,
+            $this->sqon->getPathToSqon(),
+            'The path to the Sqon was not returned.'
+        );
+    }
+
+    /**
      * Verify that the compression mode can be set.
      */
     public function testSetDatabaseCompressionMode()

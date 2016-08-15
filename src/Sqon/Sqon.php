@@ -245,6 +245,14 @@ class Sqon implements SqonInterface
     /**
      * {@inheritdoc}
      */
+    public function getPathToSqon()
+    {
+        return $this->path;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function getPaths()
     {
         return $this->database->getPaths();

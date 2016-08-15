@@ -182,6 +182,13 @@ interface SqonInterface extends Countable
     public function getPath($path);
 
     /**
+     * Returns the path to the Sqon or where the Sqon will be committed.
+     *
+     * @return string The path to the Sqon.
+     */
+    public function getPathToSqon();
+
+    /**
      * Returns all of the paths stored in the Sqon as path managers.
      *
      * ```php
