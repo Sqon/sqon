@@ -12,6 +12,8 @@ use Sqon\SqonInterface;
  */
 class BeforeSetPathEvent extends AbstractEvent
 {
+    use SkipTrait;
+
     /**
      * The name of the event.
      *
