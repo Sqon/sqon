@@ -109,10 +109,12 @@ $sqon->getEventDispatcher()->addSubscriber(
 
 The `FilterSubscriber` will filter paths that are set in the Sqon.
 
-The subscriber is capable of filtering paths by their name (e.g. "script.php" in "/path/to/script.php") and by regular expression (e.g. "/tests/" will exclude "/path/test/example"). There are two important things to remember about how these rules can be used:
+The filter subscriber supports matching paths by the name (e.g. "example" in "/path/to/example"), exact path (e.g. "path/to/script.php"), and by regular expression (e.g. "/example/" matches the path "/some/example/path"). These matches can be used to exclude or include files in the Sqon.
 
-1. The "exclude" filters will always exclude anything that matches.
-2. The "include" filters will only include things that match.
+There are two important things to remember when defining rules:
+
+- An "exclude" will always exclude.
+- An "include" acts as a whitelist.
 
 ```php
 use Sqon\Event\Subscriber\FilterSubscriber;
@@ -137,11 +139,13 @@ $sqon->getEventDispatcher()->addSubscriber(
 
 In the above example, the following paths will be allowed in the Sqon:
 
+- `path/to/include.php`
 - `vendor/name/project/LICENSE`
 - `src/My/Example/Class.php`
 
 But the following paths will *not* be allowed in the Sqon:
 
+- `path/to/exclude.php`
 - `assets/example.png`
 - `src/broken.php`
 - `tests/My/Example/ClassTest.php`
