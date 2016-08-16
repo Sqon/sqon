@@ -130,6 +130,8 @@ $sqon->getEventDispatcher()->addSubscriber(
 );
 ```
 
+> You can provide multiple names and regular expression to exclude or include by.
+
 In the above example, the following paths will be allowed in the Sqon:
 
 - `vendor/name/project/LICENSE`
@@ -137,6 +139,7 @@ In the above example, the following paths will be allowed in the Sqon:
 
 But the following paths will *not* be allowed in the Sqon:
 
+- `assets/example.png`
 - `src/broken.php`
 - `tests/My/Example/ClassTest.php`
 
