@@ -87,6 +87,59 @@ Interacting with paths (files and directories) stored in a Sqon requires an unde
 [`PathInterface`]: src/Sqon/Path/PathInterface.php
 [`SqonInterface`]: src/Sqon/SqonInterface.php
 
+### Event Subscribers
+
+As documented in `SqonInterface`, the Sqon manager provides support for modifying certain processes using event listeners. The Sqon library provides a basic set of listeners that can be used to augment the Sqon building process.
+
+#### `ChmodSubscriber`
+
+The `ChmodSubscriber` will change the permissions of the committed Sqon.
+
+```php
+use Sqon\Event\Subscriber\ChmodSubscriber;
+
+// Change permissions to 755 once committed.
+$sqon->getEventDispatcher()->addSubscriber(
+    new ChmodSubscriber(0755)
+);
+```
+
+#### `FilterSubscriber`
+
+The `FilterSubscriber` will filter paths that are set in the Sqon.
+
+The subscriber is capable of filtering paths by their name (e.g. "script.php" in "/path/to/script.php") and by regular expression (e.g. "/tests/" will exclude "/path/test/example"). There are two important things to remember about how these rules can be used:
+
+1. The "exclude" filters will always exclude anything that matches.
+2. The "include" filters will only include things that match.
+
+```php
+use Sqon\Event\Subscriber\FilterSubscriber;
+
+$sqon->getEventDispatcher()->addSubscriber(
+    [
+        'exclude' => [
+            'name' => ['broken.php'],
+            'regex' => ['/[Tt]est/']
+        ],
+        'include' => [
+            'name' => ['LICENSE'],
+            'regex' => ['/\.php$/']
+        ]
+    ]
+);
+```
+
+In the above example, the following paths will be allowed in the Sqon:
+
+- vendor/name/project/LICENSE
+- src/My/Example/Class.php
+
+But the following paths will *not* be allowed in the Sqon:
+
+- src/broken.php
+- tests/My/Example/ClassTest.php
+
 Specification
 -------------
 
