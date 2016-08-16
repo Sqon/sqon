@@ -9,6 +9,7 @@
 - [Requirements](#requirements)
 - [Install](#install)
 - [Documentation](#documentation)
+    - [Event Subscribers](#event-subscribers)
 - [Specification](#specification)
     - [Overview](#overview)
     - [Purpose](#purpose)
@@ -142,6 +143,39 @@ But the following paths will *not* be allowed in the Sqon:
 - `assets/example.png`
 - `src/broken.php`
 - `tests/My/Example/ClassTest.php`
+
+#### `ReplaceSubscriber`
+
+The `ReplaceSubscriber` will search and replace patterns in some or all files.
+
+```php
+use Sqon\Event\Subscriber\ReplaceSubscriber;
+
+$sqon->getEventDispatcher()->addSubscriber(
+    new ReplaceSubscriber(
+        [
+            // Replace contents of specific files.
+            'files' => [
+                'path/to/script.php' => [
+                    '/search/' => 'replace'
+                ]
+            ],
+
+            // Replace contents of all files.
+            'global' => [
+                '/search/' => 'replace'
+            ],
+
+            // Replace contents of matching files.
+            'regex' => [
+                '/\.php$/' => [
+                    '/search/' => 'replace'
+                ]
+            ]
+        ]
+    )
+);
+```
 
 Specification
 -------------
