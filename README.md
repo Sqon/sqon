@@ -121,10 +121,12 @@ $sqon->getEventDispatcher()->addSubscriber(
     [
         'exclude' => [
             'name' => ['broken.php'],
+            'path' => ['path/to/exclude.php'],
             'regex' => ['/[Tt]est/']
         ],
         'include' => [
             'name' => ['LICENSE'],
+            'path' => ['path/to/include.php'],
             'regex' => ['/\.php$/']
         ]
     ]

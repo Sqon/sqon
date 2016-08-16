@@ -92,6 +92,48 @@ class FilterSubscriberTest extends TestCase
     }
 
     /**
+     * Verify that a path can be excluded by exact path.
+     */
+    public function testExcludePathByExactPath()
+    {
+        $this->dispatcher->addSubscriber(
+            new FilterSubscriber(
+                [
+                    'exclude' => ['path' => ['path/to/exclude.php']]
+                ]
+            )
+        );
+
+        // Check that the filter works.
+        $event = new BeforeSetPathEvent(
+            $this->sqon,
+            'path/to/exclude.php',
+            $this->manager
+        );
+
+        $this->dispatcher->dispatch(BeforeSetPathEvent::NAME, $event);
+
+        self::assertTrue(
+            $event->isSkipped(),
+            'The path was not filtered.'
+        );
+
+        // Check that the filter does not block good paths.
+        $event = new BeforeSetPathEvent(
+            $this->sqon,
+            'include.php',
+            $this->manager
+        );
+
+        $this->dispatcher->dispatch(BeforeSetPathEvent::NAME, $event);
+
+        self::assertFalse(
+            $event->isSkipped(),
+            'The unaffected path was skipped.'
+        );
+    }
+
+    /**
      * Verify that a path can be excluded by regular expression.
      */
     public function testExcludePathByRegularExpression()
@@ -164,6 +206,48 @@ class FilterSubscriberTest extends TestCase
         $event = new BeforeSetPathEvent(
             $this->sqon,
             'include.php',
+            $this->manager
+        );
+
+        $this->dispatcher->dispatch(BeforeSetPathEvent::NAME, $event);
+
+        self::assertFalse(
+            $event->isSkipped(),
+            'The unaffected path was skipped.'
+        );
+    }
+
+    /**
+     * Verify that a path can be included by exact path.
+     */
+    public function testIncludePathByExactPath()
+    {
+        $this->dispatcher->addSubscriber(
+            new FilterSubscriber(
+                [
+                    'include' => ['path' => ['path/to/include.php']]
+                ]
+            )
+        );
+
+        // Check that the filter works.
+        $event = new BeforeSetPathEvent(
+            $this->sqon,
+            'exclude.php',
+            $this->manager
+        );
+
+        $this->dispatcher->dispatch(BeforeSetPathEvent::NAME, $event);
+
+        self::assertTrue(
+            $event->isSkipped(),
+            'The path was not filtered.'
+        );
+
+        // Check that the filter does not block good paths.
+        $event = new BeforeSetPathEvent(
+            $this->sqon,
+            'path/to/include.php',
             $this->manager
         );
 

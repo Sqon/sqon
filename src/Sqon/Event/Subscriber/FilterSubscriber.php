@@ -9,9 +9,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Filters one or more paths from being set in the Sqon.
  *
  * The filter subscriber supports matching paths by the name (e.g. "example" in
- * "/path/to/example") and by regular expression (e.g. "/example/" matches the
- * path "/some/example/path"). These matches can be used to exclude or include
- * files in the Sqon.
+ * "/path/to/example"), exact path (e.g. "path/to/script.php"), and by regular
+ * expression (e.g. "/example/" matches the path "/some/example/path"). These
+ * matches can be used to exclude or include files in the Sqon.
  *
  * There are two important things to remember when defining rules:
  *
@@ -30,6 +30,12 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *                     'broken.php'
  *
  *                 ],
+ *                 'path' => [
+ *
+ *                     // Exclude the exact path "example/script.php".
+ *                     'example/script.php'
+ *
+ *                 ],
  *                 'regex' => [
  *
  *                     // Exclude any path containing "Tests" or "tests".
@@ -44,6 +50,12 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *
  *                     // Only include paths named "LICENSE".
  *                     'LICENSE'
+ *
+ *                 ],
+ *                 'path' => [
+ *
+ *                     // Include the exact path "bin/example".
+ *                     'bin/example'
  *
  *                 ],
  *                 'regex' => [
@@ -89,6 +101,9 @@ class FilterSubscriber implements EventSubscriberInterface
      *             'name' => [
      *                 'exclude.php'
      *             ],
+     *             'path' => [
+     *                 'path/to/exclude.php'
+     *             ],
      *             'regex' => [
      *                 '/exclude\.php/'
      *             ]
@@ -96,6 +111,9 @@ class FilterSubscriber implements EventSubscriberInterface
      *         'include' => [
      *             'name' => [
      *                 'include.php'
+     *             ],
+     *             'path' => [
+     *                 'path/to/include.php'
      *             ],
      *             'regex' => [
      *                 '/include\.php/'
@@ -198,6 +216,13 @@ class FilterSubscriber implements EventSubscriberInterface
             switch ($rule) {
                 case 'name':
                     if (in_array(basename($path), $matches)) {
+                        return true;
+                    }
+
+                    break;
+
+                case 'path':
+                    if (in_array($path, $matches)) {
                         return true;
                     }
 
