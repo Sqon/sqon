@@ -365,6 +365,26 @@ class SqonTest extends TestCase
     }
 
     /**
+     * Verify that an event can prevent a path from being set.
+     */
+    public function testEventPreventsAPathFromBeingSet()
+    {
+        $this->eventDispatcher->addListener(
+            BeforeSetPathEvent::NAME,
+            function (BeforeSetPathEvent $event) {
+                $event->skip();
+            }
+        );
+
+        $this->sqon->setPath('test.php', new Memory('test'));
+
+        self::assertFalse(
+            $this->sqon->hasPath('test.php'),
+            'The event did not prevent a path from being set.'
+        );
+    }
+
+    /**
      * Verify that the path to commit the Sqon to is returned.
      */
     public function testGetPathForTheSqon()

@@ -21,9 +21,11 @@ use Sqon\Event\BeforeExtractToEvent;
 use Sqon\Event\BeforeSetBootstrapEvent;
 use Sqon\Event\BeforeSetPathEvent;
 use Sqon\Event\BeforeSetPathsUsingIteratorEvent;
+use Sqon\Event\SkipTrait;
 use Sqon\Exception\Container\DatabaseException;
 use Sqon\Exception\SqonException;
 use Sqon\Path\PathInterface;
+use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -390,7 +392,7 @@ class Sqon implements SqonInterface
      */
     public function setPath($path, PathInterface $manager)
     {
-        $this->dispatch(
+        $event = $this->dispatch(
             BeforeSetPathEvent::NAME,
             BeforeSetPathEvent::class,
             function (BeforeSetPathEvent $event) use (&$path, &$manager) {
@@ -400,6 +402,10 @@ class Sqon implements SqonInterface
             $path,
             $manager
         );
+
+        if ((null !== $event) && $event->isSkipped()) {
+            return $this;
+        }
 
         $this->database->setPath($this->cleanPath($path), $manager);
 
@@ -527,6 +533,8 @@ class Sqon implements SqonInterface
      * @param string        $class         The name of the event class.
      * @param callable|null $result        The event result handler.
      * @param mixed         $arguments,... The event constructor arguments.
+     *
+     * @return Event|null|SkipTrait The event manager.
      */
     private function dispatch(
         $name,
@@ -544,7 +552,11 @@ class Sqon implements SqonInterface
             if (null !== $result) {
                 $result($event);
             }
+
+            return $event;
         }
+
+        return null;
     }
 
     /**
