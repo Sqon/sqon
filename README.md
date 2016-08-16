@@ -132,13 +132,13 @@ $sqon->getEventDispatcher()->addSubscriber(
 
 In the above example, the following paths will be allowed in the Sqon:
 
-- vendor/name/project/LICENSE
-- src/My/Example/Class.php
+- `vendor/name/project/LICENSE`
+- `src/My/Example/Class.php`
 
 But the following paths will *not* be allowed in the Sqon:
 
-- src/broken.php
-- tests/My/Example/ClassTest.php
+- `src/broken.php`
+- `tests/My/Example/ClassTest.php`
 
 Specification
 -------------
