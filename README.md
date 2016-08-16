@@ -90,7 +90,9 @@ Interacting with paths (files and directories) stored in a Sqon requires an unde
 
 ### Event Subscribers
 
-As documented in `SqonInterface`, the Sqon manager provides support for modifying certain processes using event listeners. The Sqon library provides a basic set of listeners that can be used to augment the Sqon building process.
+As documented in `SqonInterface`, the Sqon manager provides support for modifying certain processes using event listeners. The Sqon library provides a basic set of listeners that can be used to augment the Sqon building process. In addition to these listeners, you may [create your own][] to use.
+
+[create your own]: https://symfony.com/doc/2.7/components/event_dispatcher.html#connecting-listeners
 
 #### `ChmodSubscriber`
 
