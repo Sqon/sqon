@@ -8,66 +8,46 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Filters one or more paths from being set in the Sqon.
  *
- * The filter subscriber supports matching paths by the name (e.g. "example" in
- * "/path/to/example"), exact path (e.g. "path/to/script.php"), and by regular
- * expression (e.g. "/example/" matches the path "/some/example/path"). These
- * matches can be used to exclude or include files in the Sqon.
+ * This subscriber will block one or more paths from being set in a Sqon by
+ * using exclusion and inclusion rules. If an exclusion rule is provided, any
+ * path matching the rule will be excluded regardless of any inclusion rules
+ * defined. If an inclusion rule is provided, all paths are excluded by default
+ * unless the path matches any one of the inclusion rules.
  *
- * There are two important things to remember when defining rules:
+ * Both exclusion and inclusion rules relying on matching rules.
  *
- * - An "exclude" will always exclude.
- * - An "include" acts as a whitelist.
+ * - **By Name** A name is the last part of a path. If `example` is given to
+ *   match, the path `to/example` will match but `to/example/script.php` will
+ *   not match.
+ * - **By Path** A path is the beginning of any path. If `example/to` is given,
+ *   any path that begins with `example/to` will match but `diff/example/to`
+ *   will not match.
+ * - **By Pattern** A pattern is a regular expression. Any path that is matched
+ *   by the regular expression will match. The expression must provide its own
+ *   delimiter.
  *
  * ```php
- * $dispatcher->addSubscriber(
- *     new FilterSubscriber(
- *         [
- *             // Exclude any path that matches the following rules.
- *             'exclude' => [
- *                 'name' => [
+ * $subscriber = new FilterSubscriber();
  *
- *                     // Exclude any path named "broken.php"
- *                     'broken.php'
+ * // Exclude a path by name.
+ * $subscriber->excludeByName('broken.php');
  *
- *                 ],
- *                 'path' => [
+ * // Exclude an exact path.
+ * $subscriber->excludeByPath('example/script.php');
  *
- *                     // Exclude the exact path "example/script.php".
- *                     'example/script.php'
+ * // Exclude paths matching a pattern.
+ * $subscriber->excludeByPattern('/[Tt]ests/');
  *
- *                 ],
- *                 'regex' => [
+ * // Only include paths with a specific name.
+ * $subscriber->includeByName('LICENSE');
  *
- *                     // Exclude any path containing "Tests" or "tests".
- *                     '/([Tt]ests)/'
+ * // Only include an exact path.
+ * $subscriber->includeByPath('bin/example');
  *
- *                 ]
- *             ],
+ * // Only include paths matching a pattern.
+ * $subscriber->includeByPattern('/\.php$/');
  *
- *             // Include only paths that match the following rules.
- *             'include' => [
- *                 'name' => [
- *
- *                     // Only include paths named "LICENSE".
- *                     'LICENSE'
- *
- *                 ],
- *                 'path' => [
- *
- *                     // Include the exact path "bin/example".
- *                     'bin/example'
- *
- *                 ],
- *                 'regex' => [
- *
- *                     // Also only include paths that end with ".php".
- *                     '/\.php$/'
- *
- *                 ]
- *             ]
- *         ]
- *     )
- * );
+ * $dispatcher->addSubscriber($subscriber);
  * ```
  *
  * Using the above rules, the following paths are stored in the Sqon:
@@ -89,45 +69,137 @@ class FilterSubscriber implements EventSubscriberInterface
      *
      * @var array
      */
-    private $rules;
+    private $rules = [
+        'exclude' => [
+            'name' => [],
+            'path' => [],
+            'regex' => []
+        ],
+        'include' => [
+            'name' => [],
+            'path' => [],
+            'regex' => []
+        ]
+    ];
 
     /**
-     * Initializes the new path filtering subscriber.
+     * Checks if the path should be filtered out.
+     *
+     * @param BeforeSetPathEvent $event The event manager.
+     */
+    public function beforeSetPath(BeforeSetPathEvent $event)
+    {
+        if (!$this->isAllowed($event->getPath())) {
+            $event->skip();
+        }
+    }
+
+    /**
+     * Adds a name to exclude.
      *
      * ```php
-     * $subscriber = new FilterSubscriber(
-     *     [
-     *         'exclude' => [
-     *             'name' => [
-     *                 'exclude.php'
-     *             ],
-     *             'path' => [
-     *                 'path/to/exclude.php'
-     *             ],
-     *             'regex' => [
-     *                 '/exclude\.php/'
-     *             ]
-     *         ],
-     *         'include' => [
-     *             'name' => [
-     *                 'include.php'
-     *             ],
-     *             'path' => [
-     *                 'path/to/include.php'
-     *             ],
-     *             'regex' => [
-     *                 '/include\.php/'
-     *             ]
-     *         ],
-     *     ]
-     * );
+     * $subscriber->excludeByName('example.php');
      * ```
      *
-     * @param array $rules The path filtering rules.
+     * @param string $name The name to exclude.
+     *
+     * @return FilterSubscriber A fluent interface to this subscriber.
      */
-    public function __construct(array $rules)
+    public function excludeByName($name)
     {
-        $this->rules = $rules;
+        $this->rules['exclude']['name'][] = $name;
+
+        return $this;
+    }
+
+    /**
+     * Adds an exact path to exclude.
+     *
+     * ```php
+     * $subscriber->excludeByPath('/path/to/example.php');
+     * ```
+     *
+     * @param string $path The exact path to exclude.
+     *
+     * @return FilterSubscriber A fluent interface to this subscriber.
+     */
+    public function excludeByPath($path)
+    {
+        $this->rules['exclude']['path'][] = $path;
+
+        return $this;
+    }
+
+    /**
+     * Adds a regular expression to match for exclusion.
+     *
+     * ```php
+     * $subscriber->excludeByPattern('/example/');
+     * ```
+     *
+     * @param string $pattern The pattern to match for exclusion.
+     *
+     * @return FilterSubscriber A fluent interface to this subscriber.
+     */
+    public function excludeByPattern($pattern)
+    {
+        $this->rules['exclude']['regex'][] = $pattern;
+
+        return $this;
+    }
+
+    /**
+     * Adds a name to include.
+     *
+     * ```php
+     * $subscriber->includeByName('example.php');
+     * ```
+     *
+     * @param string $name The name to include.
+     *
+     * @return FilterSubscriber A fluent interface to this subscriber.
+     */
+    public function includeByName($name)
+    {
+        $this->rules['include']['name'][] = $name;
+
+        return $this;
+    }
+
+    /**
+     * Adds an exact path to include.
+     *
+     * ```php
+     * $subscriber->includeByPath('/path/to/example.php');
+     * ```
+     *
+     * @param string $path The exact path to include.
+     *
+     * @return FilterSubscriber A fluent interface to this subscriber.
+     */
+    public function includeByPath($path)
+    {
+        $this->rules['include']['path'][] = $path;
+
+        return $this;
+    }
+
+    /**
+     * Adds a regular expression to match for exclusion.
+     *
+     * ```php
+     * $subscriber->includeByPattern('/example/');
+     * ```
+     *
+     * @param string $pattern The pattern to match for exclusion.
+     *
+     * @return FilterSubscriber A fluent interface to this subscriber.
+     */
+    public function includeByPattern($pattern)
+    {
+        $this->rules['include']['regex'][] = $pattern;
+
+        return $this;
     }
 
     /**
@@ -140,18 +212,6 @@ class FilterSubscriber implements EventSubscriberInterface
                 ['beforeSetPath', 200]
             ]
         ];
-    }
-
-    /**
-     * Checks if the path should be filtered out.
-     *
-     * @param BeforeSetPathEvent $event The event manager.
-     */
-    public function beforeSetPath(BeforeSetPathEvent $event)
-    {
-        if (!$this->isAllowed($event->getPath())) {
-            $event->skip();
-        }
     }
 
     /**
@@ -179,7 +239,9 @@ class FilterSubscriber implements EventSubscriberInterface
      */
     private function isExcluded($path)
     {
-        if (empty($this->rules['exclude'])) {
+        if (empty($this->rules['exclude']['name'])
+            && empty($this->rules['exclude']['path'])
+            && empty($this->rules['exclude']['regex'])) {
             return false;
         }
 
@@ -195,7 +257,9 @@ class FilterSubscriber implements EventSubscriberInterface
      */
     private function isIncluded($path)
     {
-        if (empty($this->rules['include'])) {
+        if (empty($this->rules['include']['name'])
+            && empty($this->rules['include']['path'])
+            && empty($this->rules['include']['regex'])) {
             return true;
         }
 
@@ -203,7 +267,7 @@ class FilterSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * Checks if a path matches any of the rules.
+     * Checks if a path matches any of the matching rules.
      *
      * @param string $path  The path to match.
      * @param array  $rules The matching rules.
@@ -222,8 +286,10 @@ class FilterSubscriber implements EventSubscriberInterface
                     break;
 
                 case 'path':
-                    if (in_array($path, $matches)) {
-                        return true;
+                    foreach ($matches as $exact) {
+                        if (0 === strpos($path, $exact)) {
+                            return true;
+                        }
                     }
 
                     break;
