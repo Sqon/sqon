@@ -37,7 +37,11 @@ class FilterSubscriberTest extends TestCase
      */
     public function testExcludeAPathByName()
     {
-        $this->subscriber->excludeByName('exclude.php');
+        self::assertSame(
+            $this->subscriber,
+            $this->subscriber->excludeByName('exclude.php'),
+            'The method did not return a fluent interface.'
+        );
 
         // The path should be skipped.
         $event = $this->createEvent('exclude.php');
@@ -65,7 +69,11 @@ class FilterSubscriberTest extends TestCase
      */
     public function testExcludeAPathByPath()
     {
-        $this->subscriber->excludeByPath('exclude/script.php');
+        self::assertSame(
+            $this->subscriber,
+            $this->subscriber->excludeByPath('exclude/script.php'),
+            'The method did not return a fluent interface.'
+        );
 
         // The path should be skipped.
         $event = $this->createEvent('exclude/script.php');
@@ -93,7 +101,11 @@ class FilterSubscriberTest extends TestCase
      */
     public function testExcludeAPathByPattern()
     {
-        $this->subscriber->excludeByPattern('/exclude/');
+        self::assertSame(
+            $this->subscriber,
+            $this->subscriber->excludeByPattern('/exclude/'),
+            'The method did not return a fluent interface.'
+        );
 
         // The path should be skipped.
         $event = $this->createEvent('exclude.php');
@@ -121,7 +133,11 @@ class FilterSubscriberTest extends TestCase
      */
     public function testIncludeAPathByName()
     {
-        $this->subscriber->includeByName('include.php');
+        self::assertSame(
+            $this->subscriber,
+            $this->subscriber->includeByName('include.php'),
+            'The method did not return a fluent interface.'
+        );
 
         // The path should not be skipped.
         $event = $this->createEvent('include.php');
@@ -149,7 +165,11 @@ class FilterSubscriberTest extends TestCase
      */
     public function testIncludeAPathByPath()
     {
-        $this->subscriber->includeByPath('include/');
+        self::assertSame(
+            $this->subscriber,
+            $this->subscriber->includeByPath('include/'),
+            'The method did not return a fluent interface.'
+        );
 
         // The path should not be skipped.
         $event = $this->createEvent('include/script.php');
@@ -177,7 +197,11 @@ class FilterSubscriberTest extends TestCase
      */
     public function testIncludeAPathByPattern()
     {
-        $this->subscriber->includeByPattern('/include/');
+        self::assertSame(
+            $this->subscriber,
+            $this->subscriber->includeByPattern('/include/'),
+            'The method did not return a fluent interface.'
+        );
 
         // The path should not be skipped.
         $event = $this->createEvent('include.php');
