@@ -2,17 +2,15 @@
 
 namespace Test\Sqon\Event\Subscriber;
 
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use PHPUnit_Framework_TestCase as TestCase;
 use Sqon\Event\BeforeSetPathEvent;
 use Sqon\Event\Subscriber\ReplaceSubscriber;
-use Sqon\Path\Memory;
 use Sqon\Path\PathInterface;
 use Sqon\SqonInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
- * Verifies that the replacement subscriber functions as intended.
+ * Verifies that the path replacement subscriber functions as intended.
  *
  * @author Kevin Herrera <kevin@herrera.io>
  *
@@ -28,225 +26,187 @@ class ReplaceSubscriberTest extends TestCase
     private $dispatcher;
 
     /**
-     * The path manager.
+     * The event subscriber.
      *
-     * @var MockObject|PathInterface
+     * @var FilterSubscriber
      */
-    private $manager;
+    private $subscriber;
 
     /**
-     * The Sqon manager mock.
-     *
-     * @var MockObject|SqonInterface
+     * Verify that directory paths are not modified.
      */
-    private $sqon;
-
-    /**
-     * Verify that directories are not processed.
-     */
-    public function testSubscriberDoesNotReplaceDirectories()
+    public function testDoNotReplaceContentsForDirectoryPaths()
     {
-        $this->dispatcher->addSubscriber(
-            new ReplaceSubscriber(
-                [
-                    'files' => [
-                        'replace.php' => [
-                            '/Hello/' => 'Goodbye'
-                        ]
-                    ],
-                    [
-                        'global' => [
-                            '/world/' => 'guest'
-                        ]
-                    ],
-                    [
-                        'regex' => [
-                            '/\.php/' => [
-                                '/\!/' => '.'
-                            ]
-                        ]
-                    ]
-                ]
-            )
-        );
+        $this->subscriber->replaceByPath('test', '/pattern/', 'replacement');
 
         $manager = $this->getMockForAbstractClass(PathInterface::class);
 
         $manager
-            ->expects($this->once())
+            ->expects(self::never())
+            ->method('getContents')
+        ;
+
+        $manager
+            ->expects(self::once())
             ->method('getType')
             ->willReturn(PathInterface::DIRECTORY)
         ;
 
-        $event = $this
-            ->getMockBuilder(BeforeSetPathEvent::class)
-            ->disableOriginalConstructor()
-            ->getMock()
-        ;
-
-        $event
-            ->expects($this->once())
-            ->method('getManager')
-            ->willReturn($manager)
-        ;
-
-        $event
-            ->expects($this->never())
-            ->method('setManager')
-        ;
+        $event = new BeforeSetPathEvent(
+            $this->getMockForAbstractClass(SqonInterface::class),
+            'test',
+            $manager
+        );
 
         $this->dispatcher->dispatch(BeforeSetPathEvent::NAME, $event);
     }
 
     /**
-     * Verify that specific files are replaced.
+     * Verify that contents are replaced for all paths.
      */
-    public function testReplaceContentsForSpecificFiles()
+    public function testReplaceContentsForAllPaths()
     {
-        $this->dispatcher->addSubscriber(
-            new ReplaceSubscriber(
-                [
-                    'files' => [
-                        'replace.php' => [
-                            '/Hello/' => 'Goodbye'
-                        ]
-                    ]
-                ]
-            )
+        self::assertSame(
+            $this->subscriber,
+            $this->subscriber->replaceAll('/pattern/', 'replacement'),
+            'The method did not return a fluent interface.'
         );
 
-        // Verify that contents are replaced.
-        $event = new BeforeSetPathEvent(
-            $this->sqon,
-            'replace.php',
-            new Memory('<?php echo "Hello, world!\n";')
-        );
+        // The contents should be replaced.
+        $event = $this->createEvent('a.php', 'Test pattern.');
 
         $this->dispatcher->dispatch(BeforeSetPathEvent::NAME, $event);
 
         self::assertEquals(
-            '<?php echo "Goodbye, world!\n";',
+            'Test replacement.',
             $event->getManager()->getContents(),
             'The contents were not replaced.'
         );
 
-        // Verify that unrelated content is not affected.
-        $event = new BeforeSetPathEvent(
-            $this->sqon,
-            'test.txt',
-            new Memory('This should not be replaced.')
-        );
+        // The contents should also be replaced.
+        $event = $this->createEvent('b.php', 'Another test pattern.');
 
         $this->dispatcher->dispatch(BeforeSetPathEvent::NAME, $event);
 
         self::assertEquals(
-            'This should not be replaced.',
+            'Another test replacement.',
             $event->getManager()->getContents(),
-            'The unrelated contents were replaced.'
+            'The contents were not replaced.'
         );
     }
 
     /**
-     * Verify that all files are replaced.
+     * Verify that contents are replaced for specific paths.
      */
-    public function testReplaceContentsForAllFiles()
+    public function testReplaceContentsForASpecificPath()
     {
-        $this->dispatcher->addSubscriber(
-            new ReplaceSubscriber(
-                [
-                    'global' => [
-                        '/world/' => 'guest'
-                    ]
-                ]
-            )
+        self::assertSame(
+            $this->subscriber,
+            $this->subscriber->replaceByPath(
+                'to/example.php',
+                '/pattern/',
+                'replacement'
+            ),
+            'The method did not return a fluent interface.'
         );
 
-        // Verify that contents are replaced.
-        $event = new BeforeSetPathEvent(
-            $this->sqon,
-            'alt.txt',
-            new Memory('<?php echo "Hello, world!\n";')
-        );
+        // The contents should be replaced.
+        $event = $this->createEvent('to/example.php', 'Test pattern.');
 
         $this->dispatcher->dispatch(BeforeSetPathEvent::NAME, $event);
 
         self::assertEquals(
-            '<?php echo "Hello, guest!\n";',
+            'Test replacement.',
             $event->getManager()->getContents(),
             'The contents were not replaced.'
         );
 
-        // Verify that unrelated content is not affected.
-        $event = new BeforeSetPathEvent(
-            $this->sqon,
-            'test.txt',
-            new Memory('This should not be replaced.')
+        // The contents should not be replaced.
+        $event = $this->createEvent(
+            'another/example.php',
+            'Another test pattern.'
         );
 
         $this->dispatcher->dispatch(BeforeSetPathEvent::NAME, $event);
 
         self::assertEquals(
-            'This should not be replaced.',
+            'Another test pattern.',
             $event->getManager()->getContents(),
-            'The unrelated contents were replaced.'
+            'The contents were not replaced.'
         );
     }
 
     /**
-     * Verify that matching files are replaced.
+     * Verify that contents are replaced for matched paths.
      */
-    public function testReplaceContentsForMatchingFiles()
+    public function testReplaceContentsForMatchedPaths()
     {
-        $this->dispatcher->addSubscriber(
-            new ReplaceSubscriber(
-                [
-                    'regex' => [
-                        '/\.php/' => [
-                            '/\!/' => '.'
-                        ]
-                    ]
-                ]
-            )
+        self::assertSame(
+            $this->subscriber,
+            $this->subscriber->replaceByPattern(
+                '/to/',
+                '/pattern/',
+                'replacement'
+            ),
+            'The method did not return a fluent interface.'
         );
 
-        // Verify that contents are replaced.
-        $event = new BeforeSetPathEvent(
-            $this->sqon,
-            'alt.php',
-            new Memory('<?php echo "Hello, world!\n";')
-        );
+        // The contents should be replaced.
+        $event = $this->createEvent('to/example.php', 'Test pattern.');
 
         $this->dispatcher->dispatch(BeforeSetPathEvent::NAME, $event);
 
         self::assertEquals(
-            '<?php echo "Hello, world.\n";',
+            'Test replacement.',
             $event->getManager()->getContents(),
             'The contents were not replaced.'
         );
 
-        // Verify that unrelated content is not affected.
-        $event = new BeforeSetPathEvent(
-            $this->sqon,
-            'test.txt',
-            new Memory('This should not be replaced.')
+        // The contents should not be replaced.
+        $event = $this->createEvent(
+            'another/example.php',
+            'Another test pattern.'
         );
 
         $this->dispatcher->dispatch(BeforeSetPathEvent::NAME, $event);
 
         self::assertEquals(
-            'This should not be replaced.',
+            'Another test pattern.',
             $event->getManager()->getContents(),
-            'The unrelated contents were replaced.'
+            'The contents were not replaced.'
         );
     }
 
     /**
-     * Creates a new event dispatcher.
+     * Creates a new event subscriber.
      */
     protected function setUp()
     {
         $this->dispatcher = new EventDispatcher();
-        $this->manager = $this->getMockForAbstractClass(PathInterface::class);
-        $this->sqon = $this->getMockForAbstractClass(SqonInterface::class);
+        $this->subscriber = new ReplaceSubscriber();
+
+        $this->dispatcher->addSubscriber($this->subscriber);
+    }
+
+    /**
+     * Creates a new event manager.
+     *
+     * @param string $path     The path.
+     * @param string $contents The contents of the path.
+     */
+    private function createEvent($path, $contents)
+    {
+        $manager = $this->getMockForAbstractClass(PathInterface::class);
+        $manager
+            ->expects(self::atMost(1))
+            ->method('getContents')
+            ->willReturn($contents)
+        ;
+
+        return new BeforeSetPathEvent(
+            $this->getMockForAbstractClass(SqonInterface::class),
+            $path,
+            $manager
+        );
     }
 }

@@ -10,36 +10,24 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Replaces the contents of some or all files.
  *
- * This subscriber will replace the contents of files. The subscriber will
- * first identify a file that needs to be modified by checking its name,
- * using a regular expression to match its path, or simply change all of them.
- * One or more regular expressions can be used to find a pattern to replace.
+ * This subscriber will replace patterns matched in the contents of paths
+ * before they are set in the Sqon. Patterns can be replaced globally, for
+ * specific paths, or for any path that matches another pattern. Multiple
+ * patterns can be replaced for each matching condition.
  *
  * ```php
- * $dispatcher->addSubscriber(
- *     new ReplaceSubscriber(
- *         [
- *             // Replace contents of specific files.
- *             'files' => [
- *                 'path/to/script.php' => [
- *                     '/search/' => 'replace'
- *                 ]
- *             ],
+ * $subscriber = new ReplaceSubscriber();
  *
- *             // Replace contents of all files.
- *             'global' => [
- *                 '/search/' => 'replace'
- *             ],
+ * // Adds a replacement for all paths.
+ * $subscriber->replaceAll('/pattern/', 'replace');
  *
- *             // Replace contents of matching files.
- *             'regex' => [
- *                 '/\.php$/' => [
- *                     '/search/' => 'replace'
- *                 ]
- *             ]
- *         ]
- *     )
- * );
+ * // Adds a replacement for a specific path.
+ * $subscriber->replaceByPath('path/to/script.php', '/pattern/', 'replace');
+ *
+ * // Adds a replacement for any path matching a pattern.
+ * $subscriber->replaceByPattern('/\.php$/', '/pattern/', 'replace');
+ *
+ * $dispatcher->addSubscriber($subscriber);
  * ```
  *
  * @author Kevin Herrera <kevin@herrera.io>
@@ -51,29 +39,11 @@ class ReplaceSubscriber implements EventSubscriberInterface
      *
      * @var array
      */
-    private $replacements;
-
-    /**
-     * Initializes the new replacement subscriber.
-     *
-     * @param array $replacements The replacements.
-     */
-    public function __construct(array $replacements)
-    {
-        $this->replacements = $replacements;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public static function getSubscribedEvents()
-    {
-        return [
-            BeforeSetPathEvent::NAME => [
-                ['beforeSetPath', 100]
-            ]
-        ];
-    }
+    private $replacements = [
+        'global' => [],
+        'path' => [],
+        'regex' => []
+    ];
 
     /**
      * Replaces the contents of the file, if applicable.
@@ -103,6 +73,89 @@ class ReplaceSubscriber implements EventSubscriberInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public static function getSubscribedEvents()
+    {
+        return [
+            BeforeSetPathEvent::NAME => [
+                ['beforeSetPath', 100]
+            ]
+        ];
+    }
+
+    /**
+     * Sets a replacement pattern that will affect all paths.
+     *
+     * ```php
+     * $subscriber->replaceAll('/pattern/', 'replacement');
+     * ```
+     *
+     * @param string $pattern     The regular expression pattern.
+     * @param string $replacement The value to replace with.
+     *
+     * @return ReplaceSubscriber A fluent interface to this subscriber.
+     */
+    public function replaceAll($pattern, $replacement)
+    {
+        $this->replacements['global'][$pattern] = $replacement;
+
+        return $this;
+    }
+
+    /**
+     * Sets a replacement pattern for a specific path.
+     *
+     * ```php
+     * $subscriber->replaceByPath(
+     *     'path/to/script.php',
+     *     '/pattern/',
+     *     'replacement'
+     * );
+     * ```
+     *
+     * @param string $path        The exact path to match.
+     * @param string $pattern     The regular expression pattern.
+     * @param string $replacement The value to replace with.
+     *
+     * @return ReplaceSubscriber A fluent interface to this subscriber.
+     */
+    public function replaceByPath($path, $pattern, $replacement)
+    {
+        if (!isset($this->replacements['path'][$path])) {
+            $this->replacements['path'][$path] = [];
+        }
+
+        $this->replacements['path'][$path][$pattern] = $replacement;
+
+        return $this;
+    }
+
+    /**
+     * Sets a replacement pattern for all paths matching a regular expression.
+     *
+     * ```php
+     * $subscriber->replaceByPattern('/path/', '/pattern/', 'replacements');
+     * ```
+     *
+     * @param string $path        The pattern for the path to match.
+     * @param string $pattern     The regular expression pattern.
+     * @param string $replacement The value to replace with.
+     *
+     * @return ReplaceSubscriber A fluent interface to this subscriber.
+     */
+    public function replaceByPattern($path, $pattern, $replacement)
+    {
+        if (!isset($this->replacements['regex'][$path])) {
+            $this->replacements['regex'][$path] = [];
+        }
+
+        $this->replacements['regex'][$path][$pattern] = $replacement;
+
+        return $this;
+    }
+
+    /**
      * Checks if the path matches any of the available replacements.
      *
      * @param string $path The path to match.
@@ -111,15 +164,15 @@ class ReplaceSubscriber implements EventSubscriberInterface
      */
     private function isMatch($path)
     {
-        if (isset($this->replacements['global'])) {
+        if (!empty($this->replacements['global'])) {
             return true;
         }
 
-        if (isset($this->replacements['files'][$path])) {
+        if (!empty($this->replacements['path'][$path])) {
             return true;
         }
 
-        if (isset($this->replacements['regex'])) {
+        if (!empty($this->replacements['regex'])) {
             foreach ($this->replacements['regex'] as $regex => $replacements) {
                 if (0 < preg_match($regex, $path)) {
                     return true;
@@ -140,21 +193,21 @@ class ReplaceSubscriber implements EventSubscriberInterface
      */
     private function processContents($path, $contents)
     {
-        if (isset($this->replacements['global'])) {
+        if (!empty($this->replacements['global'])) {
             $contents = $this->replace(
                 $contents,
                 $this->replacements['global']
             );
         }
 
-        if (isset($this->replacements['files'][$path])) {
+        if (!empty($this->replacements['path'][$path])) {
             $contents = $this->replace(
                 $contents,
-                $this->replacements['files'][$path]
+                $this->replacements['path'][$path]
             );
         }
 
-        if (isset($this->replacements['regex'])) {
+        if (!empty($this->replacements['regex'])) {
             foreach ($this->replacements['regex'] as $match => $replacements) {
                 if (0 < preg_match($match, $path)) {
                     $contents = $this->replace($contents, $replacements);
