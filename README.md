@@ -109,80 +109,72 @@ $sqon->getEventDispatcher()->addSubscriber(
 
 #### `FilterSubscriber`
 
-The `FilterSubscriber` will filter paths that are set in the Sqon.
+Filters one or more paths from being set in the Sqon.
 
-The filter subscriber supports matching paths by the name (e.g. "example" in "/path/to/example"), exact path (e.g. "path/to/script.php"), and by regular expression (e.g. "/example/" matches the path "/some/example/path"). These matches can be used to exclude or include files in the Sqon.
+This subscriber will block one or more paths from being set in a Sqon by using exclusion and inclusion rules. If an exclusion rule is provided, any path matching the rule will be excluded regardless of any inclusion rules defined. If an inclusion rule is provided, all paths are excluded by default unless the path matches any one of the inclusion rules.
 
-There are two important things to remember when defining rules:
+Both exclusion and inclusion rules relying on matching rules.
 
-- An "exclude" will always exclude.
-- An "include" acts as a whitelist.
+- **By Name** A name is the last part of a path. If `example` is given to match, the path `to/example` will match but `to/example/script.php` will not match.
+- **By Path** A path is the beginning of any path. If `example/to` is given, any path that begins with `example/to` will match but `diff/example/to` will not match.
+- **By Pattern** A pattern is a regular expression. Any path that is matched by the regular expression will match. The expression must provide its own delimiter.
 
 ```php
-use Sqon\Event\Subscriber\FilterSubscriber;
+$subscriber = new FilterSubscriber();
 
-$sqon->getEventDispatcher()->addSubscriber(
-    [
-        'exclude' => [
-            'name' => ['broken.php'],
-            'path' => ['path/to/exclude.php'],
-            'regex' => ['/[Tt]est/']
-        ],
-        'include' => [
-            'name' => ['LICENSE'],
-            'path' => ['path/to/include.php'],
-            'regex' => ['/\.php$/']
-        ]
-    ]
-);
+// Exclude a path by name.
+$subscriber->excludeByName('broken.php');
+
+// Exclude an exact path.
+$subscriber->excludeByPath('example/script.php');
+
+// Exclude paths matching a pattern.
+$subscriber->excludeByPattern('/[Tt]ests/');
+
+// Only include paths with a specific name.
+$subscriber->includeByName('LICENSE');
+
+// Only include an exact path.
+$subscriber->includeByPath('bin/example');
+
+// Only include paths matching a pattern.
+$subscriber->includeByPattern('/\.php$/');
+
+$dispatcher->addSubscriber($subscriber);
 ```
 
-> You can provide multiple names and regular expression to exclude or include by.
+Using the above rules, the following paths are stored in the Sqon:
 
-In the above example, the following paths will be allowed in the Sqon:
+- LICENSE
+- bin/example
+- src/My/Example/Class.php
 
-- `path/to/include.php`
-- `vendor/name/project/LICENSE`
-- `src/My/Example/Class.php`
+But the following paths were prevented from being stored:
 
-But the following paths will *not* be allowed in the Sqon:
-
-- `path/to/exclude.php`
-- `assets/example.png`
-- `src/broken.php`
-- `tests/My/Example/ClassTest.php`
+- broken.php
+- example/script.php
+- src/emoji.png
+- tests/My/Example/ClassTest.php
 
 #### `ReplaceSubscriber`
 
-The `ReplaceSubscriber` will search and replace patterns in some or all files.
+Replaces the contents of some or all files.
+
+This subscriber will replace patterns matched in the contents of paths before they are set in the Sqon. Patterns can be replaced globally, for specific paths, or for any path that matches another pattern. Multiple patterns can be replaced for each matching condition.
 
 ```php
-use Sqon\Event\Subscriber\ReplaceSubscriber;
+$subscriber = new ReplaceSubscriber();
 
-$sqon->getEventDispatcher()->addSubscriber(
-    new ReplaceSubscriber(
-        [
-            // Replace contents of specific files.
-            'files' => [
-                'path/to/script.php' => [
-                    '/search/' => 'replace'
-                ]
-            ],
+// Adds a replacement for all paths.
+$subscriber->replaceAll('/pattern/', 'replace');
 
-            // Replace contents of all files.
-            'global' => [
-                '/search/' => 'replace'
-            ],
+// Adds a replacement for a specific path.
+$subscriber->replaceByPath('path/to/script.php', '/pattern/', 'replace');
 
-            // Replace contents of matching files.
-            'regex' => [
-                '/\.php$/' => [
-                    '/search/' => 'replace'
-                ]
-            ]
-        ]
-    )
-);
+// Adds a replacement for any path matching a pattern.
+$subscriber->replaceByPattern('/\.php$/', '/pattern/', 'replace');
+
+$dispatcher->addSubscriber($subscriber);
 ```
 
 Specification

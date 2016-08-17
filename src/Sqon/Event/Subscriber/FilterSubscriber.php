@@ -53,10 +53,13 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Using the above rules, the following paths are stored in the Sqon:
  *
  * - LICENSE
+ * - bin/example
  * - src/My/Example/Class.php
  *
  * But the following paths were prevented from being stored:
  *
+ * - broken.php
+ * - example/script.php
  * - src/emoji.png
  * - tests/My/Example/ClassTest.php
  *
